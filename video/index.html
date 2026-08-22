@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        margin: 0; width: 1920px; height: 1080px;
+        overflow: hidden;
+        /* Same warm paper as the app, so the video and the product read as
+           one thing rather than a deck about a thing. */
+        background: #FAF6F0;
+      }
+      body {
+        font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+        color: #1F1A16;
+      }
+      .clip {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        padding: 120px;
+      }
+      .kicker {
+        font-size: 28px; letter-spacing: .22em; text-transform: uppercase;
+        color: #57504A; margin-bottom: 32px;
+      }
+      .headline { font-size: 96px; font-weight: 800; line-height: 1.1; text-align: center; }
+      .sub { font-size: 40px; color: #57504A; margin-top: 36px; text-align: center; max-width: 1400px; line-height: 1.4; }
+      .statrow { display: flex; gap: 120px; align-items: flex-start; }
+      .stat { text-align: center; }
+      .statnum { font-size: 140px; font-weight: 800; line-height: 1; color: #14547F; }
+      .statnum.warn { color: #A8291C; }
+      .statlabel { font-size: 32px; color: #57504A; margin-top: 20px; max-width: 420px; line-height: 1.35; }
+      /* Where the phone recording goes. Sized for a 1080x2400 capture scaled
+         to fit 1080 height, so nothing is cropped. */
+      .phoneslot {
+        width: 486px; height: 1080px; background: #1F1A16;
+        border-radius: 0; overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        color: #FAF6F0; font-size: 26px; text-align: center; padding: 30px;
+      }
+      .phoneslot video { width: 100%; height: 100%; object-fit: cover; }
+      .split { flex-direction: row; gap: 100px; padding: 0 120px; }
+      .splittext { flex: 1; }
+      .splittext .headline { text-align: left; font-size: 72px; }
+      .splittext .sub { text-align: left; margin-left: 0; }
+      .quote {
+        font-size: 46px; line-height: 1.5; max-width: 1500px; text-align: center;
+        font-weight: 600;
+      }
+      .hokkien { font-size: 84px; font-weight: 800; line-height: 1.3; text-align: center; }
+      .gloss { font-size: 36px; color: #57504A; margin-top: 30px; text-align: center; }
+      .diagram { display: flex; align-items: center; gap: 60px; font-size: 30px; }
+      .node {
+        border: 4px solid #14547F; border-radius: 28px; padding: 40px 46px;
+        text-align: center; background: #FFFDFA; min-width: 300px;
+      }
+      .node .t { font-size: 38px; font-weight: 800; }
+      .node .d { font-size: 26px; color: #57504A; margin-top: 12px; line-height: 1.35; }
+      .arrow { font-size: 56px; color: #57504A; }
+      .crossed { border-color: #A8291C; opacity: .45; position: relative; }
+      .badge {
+        display: inline-block; background: #E8F1E6; color: #1C4520;
+        border: 3px solid #2E6B34; border-radius: 999px;
+        padding: 18px 40px; font-size: 34px; font-weight: 800; margin-top: 40px;
+      }
+      .fixtures { display: flex; gap: 24px; margin-top: 48px; flex-wrap: wrap; justify-content: center; max-width: 1500px; }
+      .fx {
+        background: #E8F1E6; border: 3px solid #2E6B34; color: #1C4520;
+        border-radius: 18px; padding: 20px 28px; font-size: 26px; font-weight: 700;
+      }
+      .brand { font-size: 150px; font-weight: 800; letter-spacing: -.02em; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="120"
+         data-width="1920" data-height="1080">
+
+      <!-- 1. Title 0:00 -->
+      <div id="c1" class="clip" data-start="0" data-duration="6" data-track-index="1">
+        <div class="brand">SunAh</div>
+        <div class="sub">阿公，這張信講啥物？</div>
+        <div class="sub" style="font-size:32px">A one-tap letter reader for Singapore's seniors</div>
+      </div>
+
+      <!-- 2. Ageing 0:06 -->
+      <div id="c2" class="clip" data-start="6" data-duration="12" data-track-index="1">
+        <div class="kicker">Singapore, 2030</div>
+        <div class="statrow">
+          <div class="stat">
+            <div class="statnum" id="s1">1 in 4</div>
+            <div class="statlabel">Singaporeans will be 65 or older</div>
+          </div>
+          <div class="stat">
+            <div class="statnum" id="s2">83,000</div>
+            <div class="statlabel">will be living alone</div>
+          </div>
+        </div>
+        <div class="sub">Many were never English-educated, and are most comfortable in dialect.</div>
+      </div>
+
+      <!-- 3. Scam losses 0:18 -->
+      <div id="c3" class="clip" data-start="18" data-duration="8" data-track-index="1">
+        <div class="kicker">Scam losses, last year</div>
+        <div class="statrow">
+          <div class="stat">
+            <div class="statnum warn" id="s3">S$913M</div>
+            <div class="statlabel">lost to scams nationally</div>
+          </div>
+          <div class="stat">
+            <div class="statnum warn" id="s4">S$37,000</div>
+            <div class="statlabel">average loss per elderly victim — about 8× a younger victim's</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. The wait 0:26 -->
+      <div id="c4" class="clip" data-start="26" data-duration="5" data-track-index="1">
+        <div class="quote">So when an official letter arrives,<br />they wait for a grandchild to visit.</div>
+      </div>
+
+      <!-- 5. PHONE: scam letter 0:31 -->
+      <div id="c5" class="clip split" data-start="31" data-duration="10" data-track-index="1">
+        <div class="splittext">
+          <div class="kicker">One tap</div>
+          <div class="headline">The card goes red<br />and speaks Hokkien.</div>
+        </div>
+        <div class="phoneslot">
+          <!-- Drop assets/scam.mp4 here:
+               <video src="assets/scam.mp4" data-media></video> -->
+          PHONE FOOTAGE<br />assets/scam.mp4<br /><br />scam letter → red card
+        </div>
+      </div>
+
+      <!-- 6. Hokkien gloss 0:41 -->
+      <div id="c6" class="clip" data-start="41" data-duration="6" data-track-index="1">
+        <div class="hokkien">細膩！這張是騙人的。</div>
+        <div class="gloss">"Careful. This is a scam. Don't believe it, don't send money,<br />go tell someone at home."</div>
+      </div>
+
+      <!-- 7. PHONE: polyclinic 0:47 -->
+      <div id="c7" class="clip split" data-start="47" data-duration="10" data-track-index="1">
+        <div class="splittext">
+          <div class="kicker">Two dates on the letter</div>
+          <div class="headline">It reads the<br />new one.</div>
+          <div class="sub">18 August was cancelled. The appointment is 27 August.</div>
+        </div>
+        <div class="phoneslot">
+          PHONE FOOTAGE<br />assets/polyclinic.mp4<br /><br />card shows 27 Aug
+        </div>
+      </div>
+
+      <!-- 8. source_quote 0:57 -->
+      <div id="c8" class="clip" data-start="57" data-duration="6" data-track-index="1">
+        <div class="kicker">From the letter</div>
+        <div class="quote">“Your NEW appointment is confirmed for:<br />Thursday, 27 August 2026 at 10.15am”</div>
+        <div class="sub">Every card shows the line its answer came from,<br />so a family member can check it.</div>
+      </div>
+
+      <!-- 9. PHONE: language switch 1:03 -->
+      <div id="c9" class="clip split" data-start="63" data-duration="7" data-track-index="1">
+        <div class="splittext">
+          <div class="kicker">Five languages</div>
+          <div class="headline">Same letter,<br />Bahasa Melayu.</div>
+        </div>
+        <div class="phoneslot">
+          PHONE FOOTAGE<br />assets/language.mp4<br /><br />switch → replay
+        </div>
+      </div>
+
+      <!-- 10. On-device 1:10 -->
+      <div id="c10" class="clip" data-start="70" data-duration="14" data-track-index="1">
+        <div class="kicker">Why Gemma</div>
+        <div class="diagram">
+          <div class="node" id="n1">
+            <div class="t">Pixel 9</div>
+            <div class="d">Gemma 4 E2B multimodal<br />via ExecuTorch<br />image · reasoning · classification</div>
+          </div>
+          <div class="arrow crossed-arrow" id="n2">✕</div>
+          <div class="node crossed">
+            <div class="t">Cloud API</div>
+            <div class="d">never sees the letter</div>
+          </div>
+        </div>
+        <div class="sub">Medical and financial letters shouldn't leave the phone. They don't.</div>
+      </div>
+
+      <!-- 11. Offline voice 1:24 -->
+      <div id="c11" class="clip" data-start="84" data-duration="8" data-track-index="1">
+        <div class="kicker">Voice</div>
+        <div class="headline" style="font-size:72px">4 of 5 languages<br />speak on-device.</div>
+        <div class="sub">English · Bahasa Melayu · 华语 · தமிழ்<br />
+          <span style="font-size:30px">We had to name the offline voice explicitly — the platform default quietly used a server.</span>
+        </div>
+      </div>
+
+      <!-- 12. The Hokkien gap 1:32 -->
+      <div id="c12" class="clip" data-start="92" data-duration="12" data-track-index="1">
+        <div class="kicker">The one exception</div>
+        <div class="diagram">
+          <div class="node"><div class="t">Phone</div><div class="d">the letter stays here</div></div>
+          <div class="arrow">→</div>
+          <div class="node" style="border-color:#8A5A00">
+            <div class="t">One sentence</div>
+            <div class="d">summary text only<br />own hotspot, LAN only</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="node"><div class="t">Laptop GPU</div><div class="d">MERaLiON Hokkien TTS<br />A*STAR, open weights</div></div>
+        </div>
+        <div class="sub">It beats every general Chinese TTS we tested at not collapsing into Mandarin.</div>
+      </div>
+
+      <!-- 13. What's missing 1:44 -->
+      <div id="c13" class="clip" data-start="104" data-duration="10" data-track-index="1">
+        <div class="headline" style="font-size:64px">The ONNX export is an<br />open issue upstream.</div>
+        <div class="sub">When it lands, SunAh is fully on-device with no change to our code.<br />
+          That's the piece Singapore's open speech stack is still missing.</div>
+      </div>
+
+      <!-- 14. End card 1:54 -->
+      <div id="c14" class="clip" data-start="114" data-duration="6" data-track-index="1">
+        <div class="brand" style="font-size:110px">SunAh</div>
+        <div class="fixtures">
+          <div class="fx">✓ CPF credit</div>
+          <div class="fx">✓ Polyclinic reschedule</div>
+          <div class="fx">✓ Town council arrears</div>
+          <div class="fx">✓ CHAS renewal</div>
+          <div class="fx">✓ Scam demand</div>
+          <div class="fx">✓ Lift closure</div>
+        </div>
+        <div class="badge">6 of 6 — on-device, on a Pixel 9</div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // Each clip fades and lifts in. Held deliberately slow — this is a video
+      // about a product for people with slower visual processing, and a deck
+      // that snaps around undercuts that.
+      const ins = [
+        ["#c1", 0], ["#c2", 6], ["#c3", 18], ["#c4", 26], ["#c5", 31],
+        ["#c6", 41], ["#c7", 47], ["#c8", 57], ["#c9", 63], ["#c10", 70],
+        ["#c11", 84], ["#c12", 92], ["#c13", 104], ["#c14", 114],
+      ];
+      ins.forEach(([sel, at]) => {
+        tl.from(sel, { opacity: 0, y: 28, duration: 0.7, ease: "power2.out" }, at);
+      });
+
+      // Stats count up rather than appearing, so the eye has something to
+      // follow while the narration says the number.
+      tl.from("#s1", { scale: 0.9, opacity: 0, duration: 0.6 }, 6.4);
+      tl.from("#s2", { scale: 0.9, opacity: 0, duration: 0.6 }, 7.2);
+      tl.from("#s3", { scale: 0.9, opacity: 0, duration: 0.6 }, 18.4);
+      tl.from("#s4", { scale: 0.9, opacity: 0, duration: 0.6 }, 19.2);
+
+      // The cloud gets crossed out only after the narration says it.
+      tl.from("#n2", { opacity: 0, scale: 0.5, duration: 0.5 }, 73.5);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

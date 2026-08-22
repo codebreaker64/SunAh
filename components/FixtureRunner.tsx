@@ -15,7 +15,7 @@ import { buildSpeechText } from '../src/speech';
 import { speak, checkHealth, resolveOfflineVoices, voiceReport } from '../src/audio';
 import { Settings } from '../src/config';
 import { LANG_LABELS } from '../src/types';
-import { COLORS, TYPE } from '../src/theme';
+import { COLORS, TYPE, pressed as pressStyle } from '../src/theme';
 
 /**
  * The E2B viability test, blueprint sections 4 and 10.
@@ -156,11 +156,11 @@ export function FixtureRunner({ llm, settings, onBack }: Props) {
 
       <View style={styles.buttons}>
         <Pressable
-          style={({ pressed }) => [
+          style={({ pressed: p }) => [
             styles.button,
             styles.primary,
             (!llm.isReady || running) && styles.disabled,
-            pressed && styles.pressed,
+            pressStyle(p),
           ]}
           disabled={!llm.isReady || running}
           onPress={() => run(GATE_FIXTURES)}
@@ -168,10 +168,10 @@ export function FixtureRunner({ llm, settings, onBack }: Props) {
           <Text style={styles.primaryText}>Run gate (2 & 6)</Text>
         </Pressable>
         <Pressable
-          style={({ pressed }) => [
+          style={({ pressed: p }) => [
             styles.button,
             (!llm.isReady || running) && styles.disabled,
-            pressed && styles.pressed,
+            pressStyle(p),
           ]}
           disabled={!llm.isReady || running}
           onPress={() => run(FIXTURES)}
@@ -182,7 +182,7 @@ export function FixtureRunner({ llm, settings, onBack }: Props) {
 
       <View style={styles.buttons}>
         <Pressable
-          style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+          style={({ pressed: p }) => [styles.button, pressStyle(p)]}
           onPress={() => void testVoice()}
         >
           <Text style={styles.buttonText}>Test voice + laptop</Text>
@@ -280,7 +280,6 @@ const styles = StyleSheet.create({
   primaryText: { color: '#FFFFFF', fontWeight: '800', fontSize: TYPE.small },
   buttonText: { color: COLORS.primary, fontWeight: '800', fontSize: TYPE.small },
   disabled: { opacity: 0.4 },
-  pressed: { opacity: 0.7 },
   note: { paddingHorizontal: 18, paddingTop: 12, color: COLORS.muted, fontSize: TYPE.small },
   voiceNote: {
     marginHorizontal: 18,

@@ -18,13 +18,13 @@ import { parseLetterResponse } from './src/parse';
 import { buildSpeechText } from './src/speech';
 import { speak, stopAudio, resetLaptopState } from './src/audio';
 import { DEFAULT_SETTINGS, loadSettings, saveSettings, Settings } from './src/config';
-import { COLORS, TYPE } from './src/theme';
+import { COLORS, TYPE, pressed } from './src/theme';
 import { ResultCard } from './components/ResultCard';
 import { SetupScreen } from './components/SetupScreen';
 import { FixtureRunner } from './components/FixtureRunner';
 
 /**
- * Sun Ah — one screen. Camera button, result card, settings gear. Nothing else.
+ * SunAh — one screen. Camera button, result card, settings gear. Nothing else.
  * Blueprint section 9.
  */
 
@@ -176,7 +176,7 @@ export default function App() {
       <StatusBar style="dark" />
 
       <View style={styles.header}>
-        <Text style={styles.brand}>孙仔 Sun Ah</Text>
+        <Text style={styles.brand}>SunAh</Text>
         <View style={styles.headerRight}>
           <Pressable onPress={() => setScreen('test')} hitSlop={12}>
             <Text style={styles.gear}>{'⚑'}</Text>
@@ -235,7 +235,7 @@ export default function App() {
       <View style={styles.footer}>
         {result || failure ? (
           <Pressable
-            style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}
+            style={({ pressed: p }) => [styles.secondary, pressed(p)]}
             onPress={() => {
               stopAudio();
               setResult(null);
@@ -247,10 +247,11 @@ export default function App() {
           </Pressable>
         ) : (
           <Pressable
-            style={({ pressed }) => [
+            style={({ pressed: p }) => [
               styles.shutter,
               (!llm.isReady || busy) && styles.shutterDisabled,
-              pressed && styles.pressed,
+              pressed(p),
+              p && { backgroundColor: COLORS.primaryPressed },
             ]}
             onPress={onScan}
             disabled={!llm.isReady || busy}
@@ -307,7 +308,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F0F0F0',
+    backgroundColor: COLORS.surface,
     borderRadius: 18,
   },
   permissionText: { fontSize: TYPE.body, color: COLORS.primary, fontWeight: '700' },
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 88,
   },
-  shutterDisabled: { backgroundColor: '#9AB6CE' },
+  shutterDisabled: { backgroundColor: '#A9B9C4' },
   shutterText: { fontSize: TYPE.huge, color: '#FFFFFF', fontWeight: '800' },
   secondary: {
     borderWidth: 2,
@@ -346,5 +347,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   secondaryText: { fontSize: TYPE.title, color: COLORS.primary, fontWeight: '800' },
-  pressed: { opacity: 0.7 },
 });

@@ -11,7 +11,7 @@ import {
 import { Lang, LANGS, LANG_LABELS } from '../src/types';
 import { Address } from '../src/speech';
 import { Settings } from '../src/config';
-import { COLORS, TYPE } from '../src/theme';
+import { COLORS, TYPE, pressed as pressStyle } from '../src/theme';
 
 /**
  * Setup, blueprint section 9.
@@ -46,10 +46,10 @@ export function SetupScreen({ settings, onDone, firstRun }: Props) {
         <Pressable
           key={l}
           onPress={() => setLang(l)}
-          style={({ pressed }) => [
+          style={({ pressed: p }) => [
             styles.langButton,
             lang === l && styles.langButtonActive,
-            pressed && styles.pressed,
+            pressStyle(p),
           ]}
           accessibilityRole="radio"
           accessibilityState={{ selected: lang === l }}
@@ -77,10 +77,10 @@ export function SetupScreen({ settings, onDone, firstRun }: Props) {
           <Pressable
             key={value}
             onPress={() => setAddress(value)}
-            style={({ pressed }) => [
+            style={({ pressed: p }) => [
               styles.chip,
               address === value && styles.chipActive,
-              pressed && styles.pressed,
+              pressStyle(p),
             ]}
           >
             <Text
@@ -137,7 +137,7 @@ export function SetupScreen({ settings, onDone, firstRun }: Props) {
             setupDone: true,
           })
         }
-        style={({ pressed }) => [styles.done, pressed && styles.pressed]}
+        style={({ pressed: p }) => [styles.done, pressStyle(p)]}
         accessibilityRole="button"
       >
         <Text style={styles.doneText}>Done</Text>
@@ -218,5 +218,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   doneText: { fontSize: TYPE.title, color: '#FFFFFF', fontWeight: '800' },
-  pressed: { opacity: 0.65 },
 });

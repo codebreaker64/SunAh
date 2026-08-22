@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Sun Ah",
+    "name": "SunAh",
     "slug": "SunAh",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -29,7 +29,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Sun Ah uses the camera to read your letter. The photo stays on this phone."
+          "cameraPermission": "SunAh uses the camera to read your letter. The photo stays on this phone."
         }
       ],
       "expo-audio",

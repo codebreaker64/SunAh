@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { AudioSource, Lang, LetterResult } from '../src/types';
-import { STATUS_STYLE, COLORS, TYPE } from '../src/theme';
+import { STATUS_STYLE, COLORS, TYPE, pressed as pressStyle } from '../src/theme';
 
 /**
  * The result card, blueprint sections 7c and 9.
@@ -93,9 +93,9 @@ export function ResultCard({
       <View style={styles.footer}>
         <Pressable
           onPress={onReplay}
-          style={({ pressed }) => [
+          style={({ pressed: p }) => [
             styles.replay,
-            { borderColor: style.border, opacity: pressed ? 0.6 : 1 },
+            { borderColor: style.border }, pressStyle(p),
           ]}
           accessibilityRole="button"
           accessibilityLabel="Play again"

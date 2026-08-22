@@ -42,3 +42,9 @@ yarn-error.*
 
 # selftest build output
 .selftest/
+
+# hyperframes render output and deps
+video/node_modules/
+video/out/
+video/.hyperframes/
+video/assets/*.mp4

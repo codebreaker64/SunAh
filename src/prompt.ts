@@ -40,7 +40,19 @@ const SCHEMA = `STATUS is one of:
 }
 
 If a letter shows a cancelled date and a new date, use ONLY the new date.
-Never invent an amount or a date. Use null if unclear.`;
+Never invent an amount or a date. Use null if unclear.
+
+Money CREDITED, DEPOSITED, PAID TO or GIVEN TO the reader is money they
+RECEIVED. That is INFO_ONLY with amount_due NIL. Only money the reader must
+PAY OUT is ACTION_REQUIRED. Read the direction of the money before deciding.
+
+The words "ACTION REQUIRED" often appear as a printed LABEL on the letter. Read
+what follows them. "ACTION REQUIRED: None" means INFO_ONLY. Never classify a
+letter as ACTION_REQUIRED merely because that phrase appears on it.
+
+source_quote must be copied EXACTLY from the letter, word for word. If you
+cannot read a line clearly enough to copy it, use "" rather than paraphrasing
+or guessing. A quote that is not in the letter is worse than no quote.`;
 
 /**
  * Four worked examples: the credit-not-debit case, the cancelled-date case, a
