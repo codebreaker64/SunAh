@@ -112,6 +112,17 @@ export function ResultCard({
         {audioSource === 'none' ? (
           <Text style={styles.noAudio}>no voice — read the text above</Text>
         ) : null}
+        {/* We spoke a different language than the one chosen. Saying so is not
+            optional: otherwise a Hokkien speaker just hears Mandarin with no
+            explanation and assumes the app is broken. */}
+        {audioSource === 'device-fallback' ? (
+          <View style={styles.fallbackBox}>
+            <Text style={styles.fallbackLead}>福建话无声，用华语讲</Text>
+            <Text style={styles.noAudio}>
+              Hokkien voice unavailable — spoken in Mandarin
+            </Text>
+          </View>
+        ) : null}
       </View>
     </ScrollView>
   );
@@ -219,5 +230,15 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: TYPE.small,
     color: COLORS.muted,
+  },
+  fallbackBox: {
+    marginTop: 10,
+  },
+  // The senior reads this one, so it is their script and their size. The
+  // English line under it is for the family member standing next to them.
+  fallbackLead: {
+    fontSize: TYPE.body,
+    fontWeight: '700',
+    color: COLORS.ink,
   },
 });

@@ -16,7 +16,7 @@ import { AudioSource, LetterResult } from './src/types';
 import { visionMessages } from './src/prompt';
 import { parseLetterResponse } from './src/parse';
 import { buildSpeechText } from './src/speech';
-import { speak, stopAudio } from './src/audio';
+import { speak, stopAudio, resetLaptopState } from './src/audio';
 import { DEFAULT_SETTINGS, loadSettings, saveSettings, Settings } from './src/config';
 import { COLORS, TYPE } from './src/theme';
 import { ResultCard } from './components/ResultCard';
@@ -48,6 +48,9 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<LetterResult | null>(null);
   const [speechText, setSpeechText] = useState('');
+  // Said aloud when Hokkien has no voice available. Mandarin, not English:
+  // a Hokkien speaker is far likelier to follow 华语.
+  const [fallbackText, setFallbackText] = useState('');
   const [audioSource, setAudioSource] = useState<AudioSource>('none');
   const [failure, setFailure] = useState<string | null>(null);
 
@@ -67,12 +70,21 @@ export default function App() {
   const persist = useCallback((s: Settings) => {
     setSettings(s);
     saveSettings(s);
+    // The IP may have just been corrected, so forget that the laptop was down.
+    resetLaptopState();
     setScreen('scan');
   }, []);
 
   const say = useCallback(
-    async (text: string) => {
-      const src = await speak(text, settings.lang, settings);
+    async (text: string, fallback: string) => {
+      const src = await speak(
+        text,
+        settings.lang,
+        settings,
+        fallback && settings.lang === 'nan'
+          ? { text: fallback, lang: 'cmn' as const }
+          : undefined
+      );
       setAudioSource(src);
     },
     [settings]
@@ -104,7 +116,7 @@ export default function App() {
         // "couldn't read this one". Never a blank card.
         setFailure(
           parsed.partial.summary_english ??
-            'Sorry — I could not read this one. Try again with more light, or ask someone at home.'
+          'Sorry — I could not read this one. Try again with more light, or ask someone at home.'
         );
         return;
       }
@@ -112,8 +124,10 @@ export default function App() {
       // The card paints before any audio call (section 7c).
       setResult(parsed.result);
       const text = buildSpeechText(parsed.result, settings.lang, settings.address);
+      const alt = buildSpeechText(parsed.result, 'cmn', settings.address);
       setSpeechText(text);
-      void say(text);
+      setFallbackText(alt);
+      void say(text, alt);
     } catch (e) {
       setFailure(
         'Sorry — I could not read this one. Try again with more light, or ask someone at home.'
@@ -148,7 +162,11 @@ export default function App() {
     return (
       <View style={[styles.root, { paddingTop: TOP_INSET }]}>
         <StatusBar style="dark" />
-        <FixtureRunner llm={llm} onBack={() => setScreen('scan')} />
+        <FixtureRunner
+          llm={llm}
+          settings={settings}
+          onBack={() => setScreen('scan')}
+        />
       </View>
     );
   }
@@ -193,7 +211,7 @@ export default function App() {
             speechText={speechText}
             lang={settings.lang}
             audioSource={audioSource}
-            onReplay={() => void say(speechText)}
+            onReplay={() => void say(speechText, fallbackText)}
           />
         ) : failure ? (
           <View style={styles.failureBox}>

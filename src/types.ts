@@ -45,5 +45,13 @@ export interface LetterResult {
   source_quote: string;
 }
 
-/** Where a played clip came from, for the cloud glyph in section 3. */
-export type AudioSource = 'device' | 'cache' | 'local-gpu' | 'cloud' | 'none';
+/** Where a played clip came from, for the cloud glyph in section 3.
+ *  'device-fallback' means we spoke a DIFFERENT language than the one chosen,
+ *  because the chosen one had no available voice. The card must say so. */
+export type AudioSource =
+  | 'device'
+  | 'device-fallback'
+  | 'cache'
+  | 'local-gpu'
+  | 'cloud'
+  | 'none';

@@ -7,10 +7,15 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import * as Speech from 'expo-speech';
 import type { Message } from 'react-native-executorch';
 import { FIXTURES, GATE_FIXTURES, Fixture } from '../src/fixtures';
 import { textMessages } from '../src/prompt';
 import { parseLetterResponse, scoreAgainst } from '../src/parse';
+import { buildSpeechText } from '../src/speech';
+import { speak, checkHealth, resolveOfflineVoices } from '../src/audio';
+import { Settings } from '../src/config';
+import { LANG_LABELS } from '../src/types';
 import { COLORS, TYPE } from '../src/theme';
 
 /**
@@ -32,6 +37,7 @@ interface Props {
   // The `useLLM` return value. Stateless generate() so fixture N is not
   // classified with fixtures 1..N-1 still in the conversation history.
   llm: { isReady: boolean; generate: (m: Message[]) => Promise<string> };
+  settings: Settings;
   onBack: () => void;
 }
 
@@ -43,10 +49,60 @@ interface Outcome {
   ms: number;
 }
 
-export function FixtureRunner({ llm, onBack }: Props) {
+export function FixtureRunner({ llm, settings, onBack }: Props) {
   const [running, setRunning] = useState(false);
   const [outcomes, setOutcomes] = useState<Outcome[]>([]);
   const [current, setCurrent] = useState<string | null>(null);
+  const [voiceNote, setVoiceNote] = useState<string | null>(null);
+
+  /**
+   * Pre-flight the audio path without scanning a letter. Section 6 says to hit
+   * /health from the phone before pitching; this does that plus actually
+   * speaks, because a reachable server still tells you nothing about whether
+   * the phone has a voice installed for the chosen language.
+   */
+  async function testVoice() {
+    setVoiceNote('checking…');
+    await resolveOfflineVoices();
+    const voices = await Speech.getAvailableVoicesAsync().catch(() => []);
+    const want = settings.lang === 'nan' ? 'cmn' : settings.lang;
+    const prefix = { en: 'en', ms: 'ms', cmn: 'zh', ta: 'ta', nan: 'zh' }[want];
+    const have = voices.filter((v) => v.language?.toLowerCase().startsWith(prefix));
+    // Google TTS identifiers end in -local or -server. Section 3 claims four of
+    // five languages speak offline, and that claim is only true if a -local
+    // voice is actually installed for the language in use — the engine ships
+    // with server voices and silently uses them otherwise.
+    const local = have.filter((v) =>
+      /local|embedded|offline/i.test(v.identifier ?? '')
+    );
+
+    const health = await checkHealth(settings.laptopBaseUrl);
+    const sample = buildSpeechText(FIXTURES[1].expected, settings.lang, settings.address);
+    const fallback = buildSpeechText(FIXTURES[1].expected, 'cmn', settings.address);
+    const src = await speak(sample, settings.lang, settings,
+      settings.lang === 'nan' ? { text: fallback, lang: 'cmn' as const } : undefined);
+
+    const laptop = health.ok
+      ? `up (${health.vramGb ?? '?'} GB VRAM)`
+      : 'unreachable';
+
+    setVoiceNote(
+      [
+        `language: ${LANG_LABELS[settings.lang]}`,
+        `device voices for ${prefix}: ${have.length} (${local.length} offline)`,
+        local.length === 0
+          ? 'WARNING: no offline voice — this language speaks via Google servers, so the "fully offline" claim does not hold for it'
+          : '',
+        `laptop ${settings.laptopBaseUrl}: ${laptop}`,
+        `played from: ${src}`,
+        src === 'none'
+          ? 'NO AUDIO — install the language pack in Android TTS settings'
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n')
+    );
+  }
 
   async function run(set: Fixture[]) {
     if (!llm.isReady || running) return;
@@ -130,6 +186,17 @@ export function FixtureRunner({ llm, onBack }: Props) {
           <Text style={styles.buttonText}>Run all six</Text>
         </Pressable>
       </View>
+
+      <View style={styles.buttons}>
+        <Pressable
+          style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+          onPress={() => void testVoice()}
+        >
+          <Text style={styles.buttonText}>Test voice + laptop</Text>
+        </Pressable>
+      </View>
+
+      {voiceNote ? <Text style={styles.voiceNote}>{voiceNote}</Text> : null}
 
       {!llm.isReady ? (
         <Text style={styles.note}>Waiting for the model to load…</Text>
@@ -222,6 +289,16 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.4 },
   pressed: { opacity: 0.7 },
   note: { paddingHorizontal: 18, paddingTop: 12, color: COLORS.muted, fontSize: TYPE.small },
+  voiceNote: {
+    marginHorizontal: 18,
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: '#F2F2F2',
+    color: COLORS.ink,
+    fontSize: TYPE.small - 2,
+    lineHeight: (TYPE.small - 2) * 1.5,
+  },
   runningRow: {
     flexDirection: 'row',
     alignItems: 'center',
