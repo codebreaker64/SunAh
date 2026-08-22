@@ -169,6 +169,12 @@ export async function speak(
   lang: Lang,
   settings: Settings,
   /**
+   * Skip the laptop-down backoff. Set when the user explicitly asked for
+   * audio again: after they have fixed the network, a 60s block makes a
+   * working app look broken, and they are standing there tapping.
+   */
+  force: boolean,
+  /**
    * What to say when the primary voice is unavailable. Section 7d: "For
    * Hokkien a 404 means there is no fallback: show the text large on screen
    * and offer the English voice instead."
@@ -197,6 +203,7 @@ export async function speak(
       : 'device-fallback';
   };
 
+  if (force) laptopDownUntil = 0;
   if (Date.now() < laptopDownUntil) return giveUp();
 
   const controller = new AbortController();

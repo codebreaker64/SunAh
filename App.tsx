@@ -76,11 +76,12 @@ export default function App() {
   }, []);
 
   const say = useCallback(
-    async (text: string, fallback: string) => {
+    async (text: string, fallback: string, force = false) => {
       const src = await speak(
         text,
         settings.lang,
         settings,
+        force,
         fallback && settings.lang === 'nan'
           ? { text: fallback, lang: 'cmn' as const }
           : undefined
@@ -211,7 +212,7 @@ export default function App() {
             speechText={speechText}
             lang={settings.lang}
             audioSource={audioSource}
-            onReplay={() => void say(speechText, fallbackText)}
+            onReplay={() => void say(speechText, fallbackText, true)}
           />
         ) : failure ? (
           <View style={styles.failureBox}>

@@ -71,7 +71,7 @@ export function FixtureRunner({ llm, settings, onBack }: Props) {
     const health = await checkHealth(settings.laptopBaseUrl);
     const sample = buildSpeechText(FIXTURES[1].expected, settings.lang, settings.address);
     const fallback = buildSpeechText(FIXTURES[1].expected, 'cmn', settings.address);
-    const src = await speak(sample, settings.lang, settings,
+    const src = await speak(sample, settings.lang, settings, true,
       settings.lang === 'nan' ? { text: fallback, lang: 'cmn' as const } : undefined);
 
     const laptop = health.ok
