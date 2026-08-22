@@ -76,18 +76,23 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="120"
+    <div id="root" data-composition-id="main" data-start="0" data-duration="137.26"
          data-width="1920" data-height="1080">
 
+      <!-- Narration. Recorded on the phone, 137.26s. Track 0 so it sits
+           under every visual. -->
+      <audio id="vo" src="script.m4a" data-start="0" data-duration="137.26"
+             data-track-index="0" data-volume="1"></audio>
+
       <!-- 1. Title 0:00 -->
-      <div id="c1" class="clip" data-start="0" data-duration="6" data-track-index="1">
+      <div id="c1" class="clip" data-start="0" data-duration="7.6" data-track-index="1">
         <div class="brand">SunAh</div>
         <div class="sub">阿公，這張信講啥物？</div>
         <div class="sub" style="font-size:32px">A one-tap letter reader for Singapore's seniors</div>
       </div>
 
       <!-- 2. Ageing 0:06 -->
-      <div id="c2" class="clip" data-start="6" data-duration="12" data-track-index="1">
+      <div id="c2" class="clip" data-start="7.6" data-duration="15.3" data-track-index="1">
         <div class="kicker">Singapore, 2030</div>
         <div class="statrow">
           <div class="stat">
@@ -103,7 +108,7 @@
       </div>
 
       <!-- 3. Scam losses 0:18 -->
-      <div id="c3" class="clip" data-start="18" data-duration="8" data-track-index="1">
+      <div id="c3" class="clip" data-start="22.9" data-duration="10.1" data-track-index="1">
         <div class="kicker">Scam losses, last year</div>
         <div class="statrow">
           <div class="stat">
@@ -118,50 +123,33 @@
       </div>
 
       <!-- 4. The wait 0:26 -->
-      <div id="c4" class="clip" data-start="26" data-duration="5" data-track-index="1">
+      <div id="c4" class="clip" data-start="33" data-duration="6.4" data-track-index="1">
         <div class="quote">So when an official letter arrives,<br />they wait for a grandchild to visit.</div>
       </div>
 
-      <!-- 5. PHONE: scam letter 0:31 -->
-      <div id="c5" class="clip split" data-start="31" data-duration="10" data-track-index="1">
-        <div class="splittext">
-          <div class="kicker">One tap</div>
-          <div class="headline">The card goes red<br />and speaks Hokkien.</div>
-        </div>
-        <div class="phoneslot">
-          <!-- Drop assets/scam.mp4 here:
-               <video src="assets/scam.mp4" data-media></video> -->
-          PHONE FOOTAGE<br />assets/scam.mp4<br /><br />scam letter → red card
-        </div>
-      </div>
-
-      <!-- 6. Hokkien gloss 0:41 -->
-      <div id="c6" class="clip" data-start="41" data-duration="6" data-track-index="1">
-        <div class="hokkien">細膩！這張是騙人的。</div>
-        <div class="gloss">"Careful. This is a scam. Don't believe it, don't send money,<br />go tell someone at home."</div>
-      </div>
 
       <!-- 7. PHONE: polyclinic 0:47 -->
-      <div id="c7" class="clip split" data-start="47" data-duration="10" data-track-index="1">
+      <div id="c7" class="clip split" data-start="39.4" data-duration="14" data-track-index="1">
         <div class="splittext">
           <div class="kicker">Two dates on the letter</div>
           <div class="headline">It reads the<br />new one.</div>
           <div class="sub">18 August was cancelled. The appointment is 27 August.</div>
         </div>
         <div class="phoneslot">
-          PHONE FOOTAGE<br />assets/polyclinic.mp4<br /><br />card shows 27 Aug
+          <video id="polyclinic-clip" src="assets/polyclinic.mp4" data-media muted playsinline
+                 data-start="39.4" data-duration="14" data-track-index="2"></video>
         </div>
       </div>
 
       <!-- 8. source_quote 0:57 -->
-      <div id="c8" class="clip" data-start="57" data-duration="6" data-track-index="1">
+      <div id="c8" class="clip" data-start="53.4" data-duration="7.6" data-track-index="1">
         <div class="kicker">From the letter</div>
         <div class="quote">“Your NEW appointment is confirmed for:<br />Thursday, 27 August 2026 at 10.15am”</div>
         <div class="sub">Every card shows the line its answer came from,<br />so a family member can check it.</div>
       </div>
 
       <!-- 9. PHONE: language switch 1:03 -->
-      <div id="c9" class="clip split" data-start="63" data-duration="7" data-track-index="1">
+      <div id="c9" class="clip split" data-start="61" data-duration="8.9" data-track-index="1">
         <div class="splittext">
           <div class="kicker">Five languages</div>
           <div class="headline">Same letter,<br />Bahasa Melayu.</div>
@@ -172,7 +160,7 @@
       </div>
 
       <!-- 10. On-device 1:10 -->
-      <div id="c10" class="clip" data-start="70" data-duration="14" data-track-index="1">
+      <div id="c10" class="clip" data-start="69.9" data-duration="17.8" data-track-index="1">
         <div class="kicker">Why Gemma</div>
         <div class="diagram">
           <div class="node" id="n1">
@@ -189,7 +177,7 @@
       </div>
 
       <!-- 11. Offline voice 1:24 -->
-      <div id="c11" class="clip" data-start="84" data-duration="8" data-track-index="1">
+      <div id="c11" class="clip" data-start="87.7" data-duration="10.2" data-track-index="1">
         <div class="kicker">Voice</div>
         <div class="headline" style="font-size:72px">4 of 5 languages<br />speak on-device.</div>
         <div class="sub">English · Bahasa Melayu · 华语 · தமிழ்<br />
@@ -198,7 +186,7 @@
       </div>
 
       <!-- 12. The Hokkien gap 1:32 -->
-      <div id="c12" class="clip" data-start="92" data-duration="12" data-track-index="1">
+      <div id="c12" class="clip" data-start="97.9" data-duration="15.3" data-track-index="1">
         <div class="kicker">The one exception</div>
         <div class="diagram">
           <div class="node"><div class="t">Phone</div><div class="d">the letter stays here</div></div>
@@ -214,14 +202,14 @@
       </div>
 
       <!-- 13. What's missing 1:44 -->
-      <div id="c13" class="clip" data-start="104" data-duration="10" data-track-index="1">
+      <div id="c13" class="clip" data-start="113.2" data-duration="12.7" data-track-index="1">
         <div class="headline" style="font-size:64px">The ONNX export is an<br />open issue upstream.</div>
         <div class="sub">When it lands, SunAh is fully on-device with no change to our code.<br />
           That's the piece Singapore's open speech stack is still missing.</div>
       </div>
 
       <!-- 14. End card 1:54 -->
-      <div id="c14" class="clip" data-start="114" data-duration="6" data-track-index="1">
+      <div id="c14" class="clip" data-start="125.9" data-duration="11.36" data-track-index="1">
         <div class="brand" style="font-size:110px">SunAh</div>
         <div class="fixtures">
           <div class="fx">✓ CPF credit</div>
@@ -243,9 +231,9 @@
       // about a product for people with slower visual processing, and a deck
       // that snaps around undercuts that.
       const ins = [
-        ["#c1", 0], ["#c2", 6], ["#c3", 18], ["#c4", 26], ["#c5", 31],
-        ["#c6", 41], ["#c7", 47], ["#c8", 57], ["#c9", 63], ["#c10", 70],
-        ["#c11", 84], ["#c12", 92], ["#c13", 104], ["#c14", 114],
+        ["#c1", 0], ["#c2", 7.6], ["#c3", 22.9], ["#c4", 33],
+        ["#c7", 39.4], ["#c8", 53.4], ["#c9", 61], ["#c10", 69.9],
+        ["#c11", 87.7], ["#c12", 97.9], ["#c13", 113.2], ["#c14", 125.9],
       ];
       ins.forEach(([sel, at]) => {
         tl.from(sel, { opacity: 0, y: 28, duration: 0.7, ease: "power2.out" }, at);
@@ -253,10 +241,10 @@
 
       // Stats count up rather than appearing, so the eye has something to
       // follow while the narration says the number.
-      tl.from("#s1", { scale: 0.9, opacity: 0, duration: 0.6 }, 6.4);
-      tl.from("#s2", { scale: 0.9, opacity: 0, duration: 0.6 }, 7.2);
-      tl.from("#s3", { scale: 0.9, opacity: 0, duration: 0.6 }, 18.4);
-      tl.from("#s4", { scale: 0.9, opacity: 0, duration: 0.6 }, 19.2);
+      tl.from("#s1", { scale: 0.9, opacity: 0, duration: 0.6 }, 8.0);
+      tl.from("#s2", { scale: 0.9, opacity: 0, duration: 0.6 }, 8.8);
+      tl.from("#s3", { scale: 0.9, opacity: 0, duration: 0.6 }, 23.3);
+      tl.from("#s4", { scale: 0.9, opacity: 0, duration: 0.6 }, 24.1);
 
       // The cloud gets crossed out only after the narration says it.
       tl.from("#n2", { opacity: 0, scale: 0.5, duration: 0.5 }, 73.5);

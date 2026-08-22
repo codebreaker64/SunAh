@@ -49,3 +49,9 @@ video/out/
 video/renders/
 video/.hyperframes/
 video/assets/*.mp4
+video/*.m4a
+video/polyclinic.mp4
+video/silence.txt
+video/vol.txt
+video/sil2.txt
+video/sil3.txt
