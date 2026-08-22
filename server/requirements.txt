@@ -1,13 +1,31 @@
 # Sun Ah TTS server — blueprint section 6.
 #
-# Install torch FIRST and from the CUDA index, or pip will give you the
-# CPU-only build and every sentence takes 30-60s instead of 4-6:
+# These versions interlock. Changing one usually breaks another, so the chain
+# is written out rather than left for the next person to rediscover:
 #
-#   pip install torch --index-url https://download.pytorch.org/whl/cu121
+#   driver 531.88            -> reports CUDA 12.1, so cu121 wheels
+#   cu121 + Windows          -> no cp313 wheels at all, so Python 3.11
+#   cu121 + cp311 + Windows  -> torch tops out at 2.5.1
+#   transformers 5.x         -> requires torch >= 2.5   (5.15 declares torch>=2.5)
+#   omnivoice 0.2.1          -> requires transformers >= 5.3.0
+#
+# That leaves exactly one workable point: Python 3.11 + torch 2.5.1+cu121.
+# torch 2.4.1 installs fine and imports fine, but transformers' is_torch_available()
+# then returns False and the package explodes with a bare
+# "NameError: name 'torch' is not defined" from tensor_parallel.py — which looks
+# like a transformers bug rather than a version mismatch. It is a version mismatch.
+#
+# Install torch FIRST and from the CUDA index, or pip gives you the CPU-only
+# build and every sentence takes 30-60s instead of 4-6:
+#
+#   conda create -n sunah python=3.11 -y
+#   conda activate sunah
+#   pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu121 torch==2.5.1 torchaudio==2.5.1
 #   pip install -r requirements.txt
 #
-# Driver 531.88 on this machine caps the CUDA runtime at 12.1, so cu121 is
-# the right index — not cu124 or later.
+# Do NOT use the cu126 index. torch 2.13.0+cu126 enumerates the card and raw
+# cuInit(0) succeeds, but creating a compute context fails every time with
+# cudaErrorDevicesUnavailable, even with the GPU completely idle.
 
 fastapi>=0.115
 uvicorn[standard]>=0.30
@@ -15,8 +33,8 @@ pydantic>=2.7
 soundfile>=0.12
 
 # Hokkien TTS. The only model we found that reliably doesn't collapse into
-# Mandarin.
-omnivoice
+# Mandarin. Pulls transformers, librosa, accelerate and gradio.
+omnivoice==0.2.1
 
 # Cloud path only — opt-in, and the key stays server-side.
 google-genai>=1.0

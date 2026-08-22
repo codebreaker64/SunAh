@@ -44,20 +44,44 @@ Budget a few GB of free space there.
 
 ### Laptop side
 
+**Python 3.11, not the system 3.13.** This machine's default is 3.13, and
+PyTorch publishes **no Windows cu121 wheel for cp313** — only Linux. The one
+Windows/cp313 build is cu126, and that does not work here: with
+`torch 2.13.0+cu126` the card enumerated correctly and raw `cuInit(0)`
+returned success, but creating a compute context failed every time with
+`cudaErrorDevicesUnavailable` — including with the GPU completely idle at
+0 MiB. Match the driver rather than trusting CUDA minor-version
+compatibility:
+
 ```bash
+conda create -n sunah python=3.11 -y
+conda activate sunah
 cd server
-pip install torch --index-url https://download.pytorch.org/whl/cu121
+pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu121 torch==2.4.1 torchaudio==2.4.1
 pip install -r requirements.txt
-python make_voice_prompt.py ah_ma_5s.wav "<transcript in hanzi>"
-uvicorn main:app --host 0.0.0.0 --port 8000
+.\run.ps1
 ```
 
-The server prints the LAN IP to type into the phone's settings. Check `/health`
-from the phone's browser before pitching — no answer means the network, not the
-code.
+`--no-cache-dir` matters: without it a 2.4 GB wheel needs 4.8 GB transiently,
+and this laptop does not have the headroom.
 
-Driver 531.88 on this machine caps CUDA at 12.1, so **cu121** is the right
-index. Not cu124.
+`run.ps1` scopes `HF_HOME` to `C:\hf` for that process only, so the other repos
+on this machine keep their HuggingFace caches, and prints the LAN IP to type
+into the phone's settings.
+
+**Close Brave/Chrome before starting.** The 3050 has 4 GB, the model wants 2.7,
+and a Chromium browser holds ~1 GB of it. With Brave running, creating a CUDA
+context failed outright (`cudaErrorDevicesUnavailable`) — not an OOM, a refusal.
+
+Check `/health` from the phone's browser before pitching. It reports
+`voice_mode`: `clone` if `ah_ma_voice.pt` exists, `design` if not.
+
+### If you have no Hokkien recording yet
+
+The server no longer refuses to start. Without `ah_ma_voice.pt` it uses
+OmniVoice's voice-design mode — a voice described in words rather than cloned.
+It still speaks Hokkien. Record a real speaker when you can, because a cloned
+ah-ma is the thing judges will remember, but a described voice beats silence.
 
 ---
 
