@@ -92,13 +92,34 @@ export async function resolveOfflineVoices(): Promise<void> {
       /local|embedded|offline/i.test(v.identifier ?? '')
     );
     offlineVoices.set(lang, local?.identifier ?? null);
+    voiceReports.set(lang, {
+      total: candidates.length,
+      offline: candidates.filter((v) =>
+        /local|embedded|offline/i.test(v.identifier ?? '')
+      ).length,
+      chosen: local?.identifier ?? null,
+    });
   }
 }
 
-/** True when this language has no on-device voice, so speaking it uses the network. */
-export function isOnlineOnly(lang: Lang): boolean {
-  return PLATFORM_VOICE[lang] !== null && !offlineVoices.get(lang);
+/**
+ * What the diagnostics screen shows. `chosen` is null when the language has no
+ * on-device voice at all, which means speaking it goes over the network and
+ * the section 3 claim does not hold for it.
+ */
+export interface VoiceReport {
+  total: number;
+  offline: number;
+  chosen: string | null;
 }
+
+export function voiceReport(lang: Lang): VoiceReport {
+  return (
+    voiceReports.get(lang) ?? { total: 0, offline: 0, chosen: null }
+  );
+}
+
+const voiceReports = new Map<Lang, VoiceReport>();
 
 function deviceSpeak(text: string, lang: Lang): AudioSource {
   const tag = PLATFORM_VOICE[lang];

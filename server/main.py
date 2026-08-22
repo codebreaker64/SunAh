@@ -46,11 +46,25 @@ MODEL = None
 VOICE = None
 LOAD_ERROR: Optional[str] = None
 
+# How we are producing the voice, reported by /health so you know what the
+# demo will actually sound like before you stand up.
+#   "clone"  — cloned from a real Hokkien speaker (ah_ma_voice.pt). Best.
+#   "design" — described in words, no recording needed. Good enough to demo.
+VOICE_MODE = "none"
+
+# Used when there is no reference recording. Section 6 wants a real Hokkien
+# speaker and that is still the right answer — but refusing to start without
+# one means no Hokkien at all, which is worse than a designed voice.
+VOICE_INSTRUCT = (
+    "An elderly Singaporean woman in her seventies speaking Hokkien, warm, "
+    "unhurried and clear, as if explaining a letter to her grandchild."
+)
+
 
 def _load_model() -> None:
     """Load once at import. A failure here is recorded, not raised — /health
     must still answer so the phone can tell 'server down' from 'model down'."""
-    global MODEL, VOICE, LOAD_ERROR
+    global MODEL, VOICE, LOAD_ERROR, VOICE_MODE
     try:
         from omnivoice import OmniVoice, VoiceClonePrompt
 
@@ -62,14 +76,20 @@ def _load_model() -> None:
         )
 
         voice_path = os.getenv("SUNAH_VOICE", "ah_ma_voice.pt")
-        if not os.path.exists(voice_path):
-            raise FileNotFoundError(
-                f"{voice_path} not found — run make_voice_prompt.py first. "
-                "The reference clip must actually be Hokkien; a Mandarin or "
-                "English clip carries its own accent into every line."
+        if os.path.exists(voice_path):
+            VOICE = VoiceClonePrompt.load(voice_path)  # skips Whisper at runtime
+            VOICE_MODE = "clone"
+            log.info("voice cloned from %s", voice_path)
+        else:
+            VOICE_MODE = "design"
+            log.warning(
+                "%s not found — falling back to a DESIGNED voice. This works, "
+                "but record 3-10s of a real Hokkien speaker and run "
+                "make_voice_prompt.py for the voice you actually want. The "
+                "reference clip must be Hokkien: a Mandarin or English clip "
+                "carries its own accent into every line.",
+                voice_path,
             )
-        VOICE = VoiceClonePrompt.load(voice_path)  # skips Whisper at runtime
-        log.info("voice prompt loaded from %s", voice_path)
 
         try:  # optional, ~2.4x at batch 1 on Ampere
             from omnivoice.models.omnivoice_flashinfer import apply_flashinfer
@@ -127,11 +147,18 @@ def speak(req: SpeakRequest) -> Response:
         if not GPU_LOCK.acquire(timeout=30):
             raise HTTPException(503, "busy")
         try:
+            # Clone when we have a reference, describe the voice when we
+            # don't. Both produce Hokkien; only the timbre differs.
+            kwargs = (
+                {"voice_clone_prompt": VOICE}
+                if VOICE is not None
+                else {"instruct": VOICE_INSTRUCT}
+            )
             audio = MODEL.generate(
                 text=req.text,
                 language="nan",
-                voice_clone_prompt=VOICE,
                 num_step=16,
+                **kwargs,
             )
             buf = io.BytesIO()
             sf.write(buf, audio[0], MODEL.sampling_rate, format="WAV")
@@ -165,6 +192,7 @@ def health() -> dict:
     return {
         "ok": MODEL is not None,
         "model_loaded": MODEL is not None,
+        "voice_mode": VOICE_MODE,
         "load_error": LOAD_ERROR,
         "vram_gb": round(torch.cuda.memory_allocated() / 1e9, 2)
         if torch.cuda.is_available()

@@ -7,13 +7,12 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import * as Speech from 'expo-speech';
 import type { Message } from 'react-native-executorch';
 import { FIXTURES, GATE_FIXTURES, Fixture } from '../src/fixtures';
 import { textMessages } from '../src/prompt';
 import { parseLetterResponse, scoreAgainst } from '../src/parse';
 import { buildSpeechText } from '../src/speech';
-import { speak, checkHealth, resolveOfflineVoices } from '../src/audio';
+import { speak, checkHealth, resolveOfflineVoices, voiceReport } from '../src/audio';
 import { Settings } from '../src/config';
 import { LANG_LABELS } from '../src/types';
 import { COLORS, TYPE } from '../src/theme';
@@ -64,17 +63,10 @@ export function FixtureRunner({ llm, settings, onBack }: Props) {
   async function testVoice() {
     setVoiceNote('checking…');
     await resolveOfflineVoices();
-    const voices = await Speech.getAvailableVoicesAsync().catch(() => []);
+    // Hokkien has no phone voice anywhere, so for nan we report on the
+    // Mandarin voice that will actually speak.
     const want = settings.lang === 'nan' ? 'cmn' : settings.lang;
-    const prefix = { en: 'en', ms: 'ms', cmn: 'zh', ta: 'ta', nan: 'zh' }[want];
-    const have = voices.filter((v) => v.language?.toLowerCase().startsWith(prefix));
-    // Google TTS identifiers end in -local or -server. Section 3 claims four of
-    // five languages speak offline, and that claim is only true if a -local
-    // voice is actually installed for the language in use — the engine ships
-    // with server voices and silently uses them otherwise.
-    const local = have.filter((v) =>
-      /local|embedded|offline/i.test(v.identifier ?? '')
-    );
+    const report = voiceReport(want);
 
     const health = await checkHealth(settings.laptopBaseUrl);
     const sample = buildSpeechText(FIXTURES[1].expected, settings.lang, settings.address);
@@ -89,8 +81,9 @@ export function FixtureRunner({ llm, settings, onBack }: Props) {
     setVoiceNote(
       [
         `language: ${LANG_LABELS[settings.lang]}`,
-        `device voices for ${prefix}: ${have.length} (${local.length} offline)`,
-        local.length === 0
+        `${want} voices: ${report.total} (${report.offline} offline)`,
+        report.chosen ? `using: ${report.chosen}` : '',
+        report.offline === 0
           ? 'WARNING: no offline voice — this language speaks via Google servers, so the "fully offline" claim does not hold for it'
           : '',
         `laptop ${settings.laptopBaseUrl}: ${laptop}`,

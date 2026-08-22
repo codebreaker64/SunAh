@@ -2,3 +2,5 @@
 *.pt
 *.wav
 __pycache__/
+ah_ma_voice.pt
+run-local.ps1

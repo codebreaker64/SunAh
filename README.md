@@ -102,6 +102,44 @@ server/make_voice_prompt.py   Build ah_ma_voice.pt once, before Saturday
 
 ---
 
+## The privacy claim needs one line of code to be true
+
+Section 3 says to put this on a slide: *"For four of five languages the voice
+is offline too."*
+
+As originally written, that was **false on this Pixel**. Passing only a
+`language` to `expo-speech` lets Google TTS pick its own default, and it picked
+`cmn-cn-x-ssa-server` — synthesis on Google's servers — while seven offline
+`zh` voices sat installed and unused. `src/audio.ts` now resolves an offline
+voice per language at startup and names it explicitly; dispatch moved to
+`cmn-cn-x-cce-seanet-embedded`.
+
+**Verify this on whatever phone you demo on**, because the voice inventory is
+per-device. Open the app, tap **⚑**, hit **Test voice + laptop**:
+
+```
+language: 福建话
+device voices for zh: 16 (7 offline)
+laptop http://192.168.43.12:8000: unreachable
+played from: device-fallback
+```
+
+If it says `(0 offline)` for your language, the claim does not hold — install
+the language pack under Android's text-to-speech settings first.
+
+## When Hokkien has no voice
+
+There is no Hokkien voice on any phone, so with the laptop unreachable the app
+falls back to the Mandarin **template** — not the Hokkien string read by a
+Mandarin voice, which would pronounce 毋通 as "wu tong" and mean nothing. The
+card says `福建话无声，用华语讲` when it does this, because a Hokkien speaker
+hearing unexplained Mandarin concludes the app is broken.
+
+Mandarin rather than English is deliberate: a Singaporean who chose Hokkien is
+far likelier to follow 华语.
+
+---
+
 ## Two things that still need a person
 
 **The Hokkien needs a native speaker.** `src/speech.ts` carries the templates in
