@@ -46,5 +46,6 @@ yarn-error.*
 # hyperframes render output and deps
 video/node_modules/
 video/out/
+video/renders/
 video/.hyperframes/
 video/assets/*.mp4
