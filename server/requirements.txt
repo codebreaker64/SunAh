@@ -1,0 +1,22 @@
+# Sun Ah TTS server — blueprint section 6.
+#
+# Install torch FIRST and from the CUDA index, or pip will give you the
+# CPU-only build and every sentence takes 30-60s instead of 4-6:
+#
+#   pip install torch --index-url https://download.pytorch.org/whl/cu121
+#   pip install -r requirements.txt
+#
+# Driver 531.88 on this machine caps the CUDA runtime at 12.1, so cu121 is
+# the right index — not cu124 or later.
+
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+soundfile>=0.12
+
+# Hokkien TTS. The only model we found that reliably doesn't collapse into
+# Mandarin.
+omnivoice
+
+# Cloud path only — opt-in, and the key stays server-side.
+google-genai>=1.0
