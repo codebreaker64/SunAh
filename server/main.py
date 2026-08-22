@@ -55,10 +55,13 @@ VOICE_MODE = "none"
 # Used when there is no reference recording. Section 6 wants a real Hokkien
 # speaker and that is still the right answer — but refusing to start without
 # one means no Hokkien at all, which is worse than a designed voice.
-VOICE_INSTRUCT = (
-    "An elderly Singaporean woman in her seventies speaking Hokkien, warm, "
-    "unhurried and clear, as if explaining a letter to her grandchild."
-)
+# `instruct` is a CONTROLLED VOCABULARY, not free prose. OmniVoice raises
+# ValueError on anything outside its list, so "an elderly Singaporean woman
+# speaking Hokkien, warm and clear" is rejected outright. Valid English items
+# are comma+space separated and include: elderly, middle-aged, young adult,
+# teenager, child, male, female, low/moderate/high pitch, whisper, and a set
+# of accents. The Hokkien comes from `language="nan"`, not from here.
+VOICE_INSTRUCT = "elderly, female, moderate pitch"
 
 
 def _load_model() -> None:
