@@ -6,220 +6,437 @@
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body {
-        margin: 0; width: 1920px; height: 1080px;
-        overflow: hidden;
-        /* Same warm paper as the app, so the video and the product read as
-           one thing rather than a deck about a thing. */
-        background: #FAF6F0;
-      }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #FAF6F0; }
+
+      /* CJK and Tamil fallbacks are load-bearing: the cards quote Hokkien
+         han-ji, and the language list is in five scripts. These ship with
+         Windows and have no downloadable file, so they are declared local()
+         — enough for the renderer to resolve them. */
+      @font-face { font-family: "Microsoft JhengHei"; src: local("Microsoft JhengHei"); font-weight: 100 900; }
+      @font-face { font-family: "Microsoft YaHei"; src: local("Microsoft YaHei"); font-weight: 100 900; }
+      @font-face { font-family: "Nirmala UI"; src: local("Nirmala UI"); font-weight: 100 900; }
+
       body {
-        font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+        font-family: "Inter", "Segoe UI", system-ui, "Microsoft JhengHei",
+                     "Microsoft YaHei", "Nirmala UI", sans-serif;
         color: #1F1A16;
       }
+
+      /* Paper, on a full-bleed child rather than the root — the producer can
+         drop a root background and render the frame black. */
+      #bg { position: absolute; inset: 0; background: #FAF6F0; z-index: 0; }
+
       .clip {
-        position: absolute; inset: 0;
+        position: absolute; inset: 0; z-index: 1;
         display: flex; flex-direction: column;
         align-items: center; justify-content: center;
-        padding: 120px;
+        padding: 100px;
       }
+
       .kicker {
-        font-size: 28px; letter-spacing: .22em; text-transform: uppercase;
-        color: #57504A; margin-bottom: 32px;
+        font-size: 26px; letter-spacing: .2em; text-transform: uppercase;
+        color: #57504A; margin-bottom: 28px;
       }
-      .headline { font-size: 96px; font-weight: 800; line-height: 1.1; text-align: center; }
-      .sub { font-size: 40px; color: #57504A; margin-top: 36px; text-align: center; max-width: 1400px; line-height: 1.4; }
-      .statrow { display: flex; gap: 120px; align-items: flex-start; }
-      .stat { text-align: center; }
-      .statnum { font-size: 140px; font-weight: 800; line-height: 1; color: #14547F; }
+      .headline { font-size: 92px; font-weight: 800; line-height: 1.08; text-align: center; }
+      .ln { display: block; }
+      .sub {
+        font-size: 38px; color: #57504A; margin-top: 32px; text-align: center;
+        max-width: 1400px; line-height: 1.4;
+      }
+
+      /* --- stats --- */
+      .statrow { display: flex; gap: 130px; align-items: flex-start; }
+      .stat { text-align: center; width: 440px; }
+      .statnum { font-size: 132px; font-weight: 800; line-height: 1; color: #14547F; }
       .statnum.warn { color: #A8291C; }
-      .statlabel { font-size: 32px; color: #57504A; margin-top: 20px; max-width: 420px; line-height: 1.35; }
-      /* Where the phone recording goes. Sized for a 1080x2400 capture scaled
-         to fit 1080 height, so nothing is cropped. */
-      .phoneslot {
-        width: 486px; height: 1080px; background: #1F1A16;
-        border-radius: 0; overflow: hidden;
-        display: flex; align-items: center; justify-content: center;
-        color: #FAF6F0; font-size: 26px; text-align: center; padding: 30px;
+      .statlabel { font-size: 30px; color: #57504A; margin-top: 18px; line-height: 1.35; }
+      .statfoot { font-size: 36px; color: #1F1A16; margin-top: 60px; text-align: center; max-width: 1360px; line-height: 1.4; }
+      .em { color: #14547F; font-weight: 800; }
+      .em.warn { color: #A8291C; }
+
+      /* --- demo scenes: copy left, phone right --- */
+      .demo { flex-direction: row; align-items: center; gap: 80px; padding: 0 100px; }
+      .col { flex: 1; position: relative; height: 920px; }
+      .block {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column; justify-content: center;
       }
-      .phoneslot video { width: 100%; height: 100%; object-fit: cover; }
-      .split { flex-direction: row; gap: 100px; padding: 0 120px; }
-      .splittext { flex: 1; }
-      .splittext .headline { text-align: left; font-size: 72px; }
-      .splittext .sub { text-align: left; margin-left: 0; }
-      .quote {
-        font-size: 46px; line-height: 1.5; max-width: 1500px; text-align: center;
-        font-weight: 600;
+      .block .kicker, .block .headline, .block .sub { text-align: left; }
+      .block .headline { font-size: 70px; }
+      .block .sub { margin-top: 26px; max-width: 100%; font-size: 32px; }
+
+      .phone {
+        position: relative; flex: none; height: 920px;
+        border-radius: 34px; overflow: hidden; background: #0E0C0A;
+        box-shadow: 0 26px 64px rgba(31, 26, 22, .24);
       }
-      .hokkien { font-size: 84px; font-weight: 800; line-height: 1.3; text-align: center; }
-      .gloss { font-size: 36px; color: #57504A; margin-top: 30px; text-align: center; }
-      .diagram { display: flex; align-items: center; gap: 60px; font-size: 30px; }
+      .phone.poly { width: 518px; }
+      .phone.lang { width: 410px; }
+      .phone video, .phone .still {
+        position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+      }
+      .still { opacity: 0; }
+
+      /* overlays that ride on top of the phone */
+      .ovl { position: absolute; left: 0; right: 0; z-index: 3; display: flex; justify-content: center; padding: 0 20px; }
+      .speedbadge {
+        background: rgba(14, 12, 10, .86); color: #FAF6F0;
+        border-radius: 18px; padding: 16px 22px; text-align: center; max-width: 100%;
+      }
+      .speedbadge .big { font-size: 40px; font-weight: 800; line-height: 1; }
+      .speedbadge .small { font-size: 19px; color: #DCD3C7; margin-top: 8px; line-height: 1.35; }
+      .langchip {
+        background: #14547F; color: #FFFDFA; border-radius: 999px;
+        padding: 12px 26px; font-size: 25px; font-weight: 800; letter-spacing: .04em;
+        display: flex; align-items: center; gap: 14px;
+      }
+      .bars { display: flex; align-items: flex-end; gap: 4px; height: 24px; }
+      .bars i { display: block; width: 5px; height: 24px; background: #FFFDFA; border-radius: 3px; }
+      .timecut {
+        position: absolute; inset: 0; z-index: 4; background: rgba(14, 12, 10, .9);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        color: #FAF6F0; text-align: center; padding: 40px; opacity: 0;
+      }
+      .timecut .t { font-size: 46px; font-weight: 800; }
+      .timecut .d { font-size: 22px; color: #DCD3C7; margin-top: 16px; line-height: 1.4; }
+      .tapdot {
+        position: absolute; z-index: 4; border: 5px solid #14547F; border-radius: 18px;
+        background: rgba(20, 84, 127, .14); opacity: 0;
+      }
+
+      /* --- the two dates pulled off the letter --- */
+      .daterow {
+        display: flex; align-items: baseline; gap: 20px;
+        border-left: 6px solid #DCD3C7; padding: 14px 0 14px 24px; margin-top: 22px;
+      }
+      .daterow .lbl { font-size: 22px; letter-spacing: .16em; color: #57504A; width: 130px; flex: none; }
+      .daterow .val { font-size: 36px; font-weight: 700; }
+      .daterow.old { color: #57504A; }
+      .daterow.old .val { text-decoration: line-through; }
+      .daterow.now { border-left-color: #14547F; }
+      .daterow.now .val { color: #14547F; }
+      .tag {
+        font-size: 20px; font-weight: 800; letter-spacing: .1em;
+        background: #FBEAE7; color: #A8291C; border: 2px solid #A8291C;
+        border-radius: 999px; padding: 6px 14px;
+      }
+
+      .hoksaid { font-size: 52px; font-weight: 800; line-height: 1.45; }
+      .hokgloss { font-size: 30px; color: #57504A; line-height: 1.45; margin-top: 28px; }
+
+      .quotecard {
+        background: #FFFDFA; border: 3px solid #DCD3C7; border-radius: 22px;
+        padding: 34px 38px; margin-top: 26px;
+      }
+      .quotecard .qh { font-size: 22px; letter-spacing: .16em; text-transform: uppercase; color: #57504A; }
+      .quotecard .qb { font-size: 33px; line-height: 1.45; margin-top: 16px; }
+
+      /* --- diagrams --- */
+      .diagram { display: flex; align-items: center; gap: 44px; }
       .node {
-        border: 4px solid #14547F; border-radius: 28px; padding: 40px 46px;
-        text-align: center; background: #FFFDFA; min-width: 300px;
+        border: 4px solid #14547F; border-radius: 26px; padding: 34px 38px;
+        text-align: center; background: #FFFDFA; width: 400px;
       }
-      .node .t { font-size: 38px; font-weight: 800; }
-      .node .d { font-size: 26px; color: #57504A; margin-top: 12px; line-height: 1.35; }
-      .arrow { font-size: 56px; color: #57504A; }
-      .crossed { border-color: #A8291C; opacity: .45; position: relative; }
+      .node .t { font-size: 36px; font-weight: 800; }
+      .node .d { font-size: 24px; color: #57504A; margin-top: 12px; line-height: 1.4; }
+      .node.mid { border-color: #8A5A00; width: 340px; }
+      .node.off { border-color: #A8291C; }
+      .node.off .t { color: #7F1414; }
+      .arrow { font-size: 52px; color: #57504A; }
+      .nope { font-size: 76px; font-weight: 800; color: #A8291C; }
+
+      .chiprow { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 1640px; margin-top: 40px; }
+      .chip {
+        background: #E8F1E6; border: 3px solid #2E6B34; color: #1C4520;
+        border-radius: 16px; padding: 18px 26px; font-size: 30px; font-weight: 700;
+      }
+      .chip.amber { background: #FBF0DC; border-color: #8A5A00; color: #5C3B00; }
+      .chip.fx { font-size: 25px; padding: 15px 22px; }
       .badge {
         display: inline-block; background: #E8F1E6; color: #1C4520;
         border: 3px solid #2E6B34; border-radius: 999px;
-        padding: 18px 40px; font-size: 34px; font-weight: 800; margin-top: 40px;
-      }
-      .fixtures { display: flex; gap: 24px; margin-top: 48px; flex-wrap: wrap; justify-content: center; max-width: 1500px; }
-      .fx {
-        background: #E8F1E6; border: 3px solid #2E6B34; color: #1C4520;
-        border-radius: 18px; padding: 20px 28px; font-size: 26px; font-weight: 700;
+        padding: 18px 40px; font-size: 34px; font-weight: 800; margin-top: 42px;
       }
       .brand { font-size: 150px; font-weight: 800; letter-spacing: -.02em; }
+      .hokline { font-size: 46px; color: #57504A; margin-top: 26px; }
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="137.26"
+    <div id="root" data-composition-id="main" data-start="0" data-duration="146"
          data-width="1920" data-height="1080">
 
-      <!-- Narration. Recorded on the phone, 137.26s. Track 0 so it sits
-           under every visual. -->
-      <audio id="vo" src="script.m4a" data-start="0" data-duration="137.26"
-             data-track-index="0" data-volume="1"></audio>
+      <div id="bg" class="clip" data-start="0" data-duration="146" data-track-index="0"></div>
 
-      <!-- 1. Title 0:00 -->
-      <div id="c1" class="clip" data-start="0" data-duration="7.6" data-track-index="1">
-        <div class="brand">SunAh</div>
-        <div class="sub">阿公，這張信講啥物？</div>
-        <div class="sub" style="font-size:32px">A one-tap letter reader for Singapore's seniors</div>
+      <!-- ============================ NARRATION ============================
+           One recording, cut into three so the demo can be heard. The two gaps
+           are deliberate: Sun Ah speaks Hokkien in the first and Malay in the
+           second, and nothing talks over it.
+             vo-a  src 0      -> 45.95   ends on "...a cancelled one and a new one."
+             HOLE  7.85s      Hokkien plays
+             vo-b  src 45.95  -> 61.30   "It reads the new one..." then "...same letter, Malay."
+             HOLE  7.85s      Malay plays
+             vo-c  src 61.30  -> 127.93  architecture through to the end
+      -->
+      <audio id="vo-a" src="script.m4a" data-start="0" data-duration="45.95"
+             data-media-start="0" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-b" src="script.m4a" data-start="53.80" data-duration="15.35"
+             data-media-start="45.95" data-track-index="10" data-volume="1"></audio>
+      <audio id="vo-c" src="script.m4a" data-start="77.00" data-duration="66.63"
+             data-media-start="61.30" data-track-index="10" data-volume="1"></audio>
+
+      <!-- Phone audio, on its own track. Gains measured against the narration's
+           -19.7 LUFS: the Hokkien take sits at -21.9, the Malay at -19.0. -->
+      <audio id="poly-vo" src="assets/poly-cap.mp4" data-start="45.38" data-duration="7.40"
+             data-media-start="49.50" data-track-index="11" data-volume="1.58"></audio>
+      <audio id="lang-vo" src="assets/lang-cap.mp4" data-start="69.00" data-duration="8.15"
+             data-media-start="67.60" data-track-index="11" data-volume="1.26"></audio>
+
+      <!-- 1. Title — 0:00 -->
+      <div id="sc-title" class="clip" data-start="0" data-duration="4.30" data-track-index="1">
+        <div class="brand" id="t-brand">SunAh</div>
+        <div class="hokline" id="t-hok">阿公，這張信講啥物？</div>
+        <div class="sub" id="t-sub" style="font-size:32px">A one-tap letter reader for Singapore's seniors</div>
       </div>
 
-      <!-- 2. Ageing 0:06 -->
-      <div id="c2" class="clip" data-start="7.6" data-duration="15.3" data-track-index="1">
-        <div class="kicker">Singapore, 2030</div>
+      <!-- 2. Ageing — 0:04 -->
+      <div id="sc-ageing" class="clip" data-start="4.30" data-duration="12.90" data-track-index="1">
+        <div class="kicker" id="a-kick">Singapore, 2030</div>
         <div class="statrow">
-          <div class="stat">
-            <div class="statnum" id="s1">1 in 4</div>
+          <div class="stat" id="a-s1">
+            <div class="statnum">1 in 4</div>
             <div class="statlabel">Singaporeans will be 65 or older</div>
           </div>
-          <div class="stat">
-            <div class="statnum" id="s2">83,000</div>
+          <div class="stat" id="a-s2">
+            <div class="statnum">83,000</div>
             <div class="statlabel">will be living alone</div>
           </div>
         </div>
-        <div class="sub">Many were never English-educated, and are most comfortable in dialect.</div>
+        <div class="statfoot" id="a-foot">Many were never English-educated, and are most comfortable
+          in <span class="em" id="a-dialect">dialect</span>.</div>
       </div>
 
-      <!-- 3. Scam losses 0:18 -->
-      <div id="c3" class="clip" data-start="22.9" data-duration="10.1" data-track-index="1">
-        <div class="kicker">Scam losses, last year</div>
+      <!-- 3. Scam losses — 0:17 -->
+      <div id="sc-scam" class="clip" data-start="17.20" data-duration="13.90" data-track-index="1">
+        <div class="kicker" id="s-kick">Scam losses, last year</div>
         <div class="statrow">
-          <div class="stat">
-            <div class="statnum warn" id="s3">S$913M</div>
+          <div class="stat" id="s-s1">
+            <div class="statnum warn">S$913M</div>
             <div class="statlabel">lost to scams nationally</div>
           </div>
-          <div class="stat">
-            <div class="statnum warn" id="s4">S$37,000</div>
-            <div class="statlabel">average loss per elderly victim — about 8× a younger victim's</div>
+          <div class="stat" id="s-s2">
+            <div class="statnum warn">S$37,000</div>
+            <div class="statlabel">average loss per elderly victim</div>
+          </div>
+        </div>
+        <div class="statfoot" id="s-foot">About <span class="em warn" id="s-mult">8×</span>
+          what a younger victim loses.</div>
+      </div>
+
+      <!-- ================= 4. THE POLYCLINIC LETTER — 0:31 =================
+           Real capture, uncut except for speed. Source ranges:
+             5.90 -> 10.10   framing the letter, then the tap        (1x)
+            10.10 -> 49.50   the wait, all 39.4s of it               (5x)
+            49.50 -> 56.15   the card, and Sun Ah speaking Hokkien   (1x)
+           A still of the card holds after 52.03, so the narration has
+           something to point at while it explains the source quote.
+      -->
+      <div id="sc-poly" class="clip demo" data-start="31.10" data-duration="31.50" data-track-index="1">
+        <div class="col">
+          <div class="block" id="p-b1">
+            <div class="headline" style="font-size:60px">
+              <span class="ln">So when an official letter arrives,</span>
+              <span class="ln">they wait for a grandchild to visit.</span>
+            </div>
+          </div>
+
+          <div class="block" id="p-b2">
+            <div class="kicker">Sampletown Polyclinic · change of appointment</div>
+            <div class="headline">
+              <span class="ln">Two dates on</span>
+              <span class="ln">one letter.</span>
+            </div>
+            <div class="daterow old" id="p-old">
+              <div class="lbl">PREVIOUS</div>
+              <div class="val">Tue 18 Aug 2026, 9:30 AM</div>
+              <div class="tag">CANCELLED</div>
+            </div>
+            <div class="daterow now" id="p-new">
+              <div class="lbl">NEW</div>
+              <div class="val">Thu 27 Aug 2026, 10:00 AM</div>
+            </div>
+          </div>
+
+          <div class="block" id="p-hok">
+            <div class="kicker">Sun Ah, speaking 福建话</div>
+            <div class="hoksaid">阿公，這張信是政府診所寄來的。你愛做一項代誌，請你揣厝內的人鬥看覓。</div>
+            <div class="hokgloss">A-kong, this letter came from the government clinic.
+              There is something you need to do — get someone at home to look at it with you.</div>
+          </div>
+
+          <div class="block" id="p-b3">
+            <div class="kicker">Checkable by someone at home</div>
+            <div class="headline" style="font-size:60px">
+              <span class="ln">Every card ends with</span>
+              <span class="ln">the line it read.</span>
+            </div>
+            <div class="quotecard" id="p-quote">
+              <div class="qh">From the letter</div>
+              <div class="qb">The card quotes the sentence its answer came from, so a family
+                member can hold the phone next to the paper and check it.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phone poly">
+          <video id="poly-scan" src="assets/poly-cap.mp4" data-start="33.30" data-duration="4.20"
+                 data-media-start="5.90" data-track-index="2" muted playsinline></video>
+          <video id="poly-wait" src="assets/poly-cap.mp4" data-start="37.50" data-duration="7.88"
+                 data-media-start="10.10" data-playback-rate="5" data-track-index="2" muted playsinline></video>
+          <video id="poly-card" src="assets/poly-cap.mp4" data-start="45.38" data-duration="6.65"
+                 data-media-start="49.50" data-track-index="2" muted playsinline></video>
+          <img class="still" id="poly-still" src="assets/poly-card-still.png" alt="" />
+
+          <div class="ovl" id="p-speed" style="top: 300px;">
+            <div class="speedbadge">
+              <div class="big">×5</div>
+              <div class="small">the real wait was 39 s, on the phone, with no network</div>
+            </div>
+          </div>
+          <div class="ovl" id="p-chip" style="bottom: 34px;">
+            <div class="langchip">
+              <span>福建话 HOKKIEN</span>
+              <span class="bars" id="p-bars"><i></i><i></i><i></i></span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 4. The wait 0:26 -->
-      <div id="c4" class="clip" data-start="33" data-duration="6.4" data-track-index="1">
-        <div class="quote">So when an official letter arrives,<br />they wait for a grandchild to visit.</div>
+      <!-- ================= 5. LANGUAGE SWITCH — 1:02 =================
+           Second capture, same letter, scanned again from scratch.
+             1.00 ->  5.70   the chooser; the tap onto Bahasa Melayu lands at 2.01
+            67.60 -> 75.75   the Malay card, and Sun Ah speaking Malay
+           The 55s of inference between them is cut, and labelled as cut.
+      -->
+      <div id="sc-lang" class="clip demo" data-start="62.60" data-duration="14.40" data-track-index="1">
+        <div class="col">
+          <div class="block" id="l-b1">
+            <div class="kicker">Five languages</div>
+            <div class="headline">
+              <span class="ln">One tap.</span>
+              <span class="ln">Same letter.</span>
+            </div>
+            <div class="sub">福建话 needs the laptop for voice. The other four speak on the phone.</div>
+          </div>
+          <div class="block" id="l-b2">
+            <div class="kicker">Bahasa Melayu</div>
+            <div class="headline">
+              <span class="ln">The same card,</span>
+              <span class="ln">spoken again.</span>
+            </div>
+            <div class="sub">Same letter, scanned fresh — read aloud in whichever language
+              the household picked.</div>
+          </div>
+        </div>
+
+        <div class="phone lang">
+          <video id="lang-choose" src="assets/lang-cap.mp4" data-start="62.90" data-duration="4.70"
+                 data-media-start="1.00" data-track-index="2" muted playsinline></video>
+          <video id="lang-card" src="assets/lang-cap.mp4" data-start="69.00" data-duration="8.15"
+                 data-media-start="67.60" data-track-index="2" muted playsinline></video>
+
+          <div class="tapdot" id="l-tap" style="left: 18px; right: 18px; top: 366px; height: 94px;"></div>
+          <div class="timecut" id="l-cut">
+            <div class="t">≈ 55 s later</div>
+            <div class="d">the same on-device inference, cut for length</div>
+          </div>
+          <div class="ovl" id="l-chip" style="bottom: 34px;">
+            <div class="langchip">
+              <span>BAHASA MELAYU</span>
+              <span class="bars" id="l-bars"><i></i><i></i><i></i></span>
+            </div>
+          </div>
+        </div>
       </div>
 
-
-      <!-- 7. PHONE: polyclinic 0:47 -->
-      <div id="c7" class="clip split" data-start="39.4" data-duration="14" data-track-index="1">
-        <div class="splittext">
-          <div class="kicker">Two dates on the letter</div>
-          <div class="headline">It reads the<br />new one.</div>
-          <div class="sub">18 August was cancelled. The appointment is 27 August.</div>
-        </div>
-        <div class="phoneslot">
-          <video id="polyclinic-clip" src="assets/polyclinic.mp4" data-media muted playsinline
-                 data-start="39.4" data-duration="14" data-track-index="2"></video>
-        </div>
-      </div>
-
-      <!-- 8. source_quote 0:57 -->
-      <div id="c8" class="clip" data-start="53.4" data-duration="7.6" data-track-index="1">
-        <div class="kicker">From the letter</div>
-        <div class="quote">“Your NEW appointment is confirmed for:<br />Thursday, 27 August 2026 at 10.15am”</div>
-        <div class="sub">Every card shows the line its answer came from,<br />so a family member can check it.</div>
-      </div>
-
-      <!-- 9. PHONE: language switch 1:03 -->
-      <div id="c9" class="clip split" data-start="61" data-duration="8.9" data-track-index="1">
-        <div class="splittext">
-          <div class="kicker">Five languages</div>
-          <div class="headline">Same letter,<br />Bahasa Melayu.</div>
-        </div>
-        <div class="phoneslot">
-          PHONE FOOTAGE<br />assets/language.mp4<br /><br />switch → replay
-        </div>
-      </div>
-
-      <!-- 10. On-device 1:10 -->
-      <div id="c10" class="clip" data-start="69.9" data-duration="17.8" data-track-index="1">
-        <div class="kicker">Why Gemma</div>
+      <!-- 6. On-device — 1:17 -->
+      <div id="sc-ondevice" class="clip" data-start="77.00" data-duration="17.30" data-track-index="1">
+        <div class="kicker" id="o-kick">Why it runs on the phone</div>
         <div class="diagram">
-          <div class="node" id="n1">
+          <div class="node" id="o-n1">
             <div class="t">Pixel 9</div>
-            <div class="d">Gemma 4 E2B multimodal<br />via ExecuTorch<br />image · reasoning · classification</div>
+            <div class="d">Gemma 4 E2B multimodal, via ExecuTorch — image, reasoning and
+              classification, all on the device</div>
           </div>
-          <div class="arrow crossed-arrow" id="n2">✕</div>
-          <div class="node crossed">
+          <div class="nope" id="o-x">✕</div>
+          <div class="node off" id="o-n2">
             <div class="t">Cloud API</div>
             <div class="d">never sees the letter</div>
           </div>
         </div>
-        <div class="sub">Medical and financial letters shouldn't leave the phone. They don't.</div>
+        <div class="sub" id="o-sub">Medical and financial letters shouldn't leave the phone. These don't.</div>
       </div>
 
-      <!-- 11. Offline voice 1:24 -->
-      <div id="c11" class="clip" data-start="87.7" data-duration="10.2" data-track-index="1">
-        <div class="kicker">Voice</div>
-        <div class="headline" style="font-size:72px">4 of 5 languages<br />speak on-device.</div>
-        <div class="sub">English · Bahasa Melayu · 华语 · தமிழ்<br />
-          <span style="font-size:30px">We had to name the offline voice explicitly — the platform default quietly used a server.</span>
+      <!-- 7. Offline voice — 1:34 -->
+      <div id="sc-voice" class="clip" data-start="94.30" data-duration="12.00" data-track-index="1">
+        <div class="kicker" id="v-kick">Voice</div>
+        <div class="headline" id="v-head" style="font-size:76px">
+          <span class="ln">4 of 5 languages</span>
+          <span class="ln">speak on-device.</span>
         </div>
+        <div class="chiprow" id="v-chips">
+          <div class="chip">English</div>
+          <div class="chip">Bahasa Melayu</div>
+          <div class="chip">华语</div>
+          <div class="chip">தமிழ்</div>
+          <div class="chip amber">福建话 — laptop</div>
+        </div>
+        <div class="sub" id="v-sub" style="font-size:32px">We had to name the offline voice explicitly.
+          The platform default quietly used a server.</div>
       </div>
 
-      <!-- 12. The Hokkien gap 1:32 -->
-      <div id="c12" class="clip" data-start="97.9" data-duration="15.3" data-track-index="1">
-        <div class="kicker">The one exception</div>
+      <!-- 8. The Hokkien exception — 1:46 -->
+      <div id="sc-hokkien" class="clip" data-start="106.30" data-duration="17.60" data-track-index="1">
+        <div class="kicker" id="h-kick">The one exception</div>
         <div class="diagram">
-          <div class="node"><div class="t">Phone</div><div class="d">the letter stays here</div></div>
-          <div class="arrow">→</div>
-          <div class="node" style="border-color:#8A5A00">
+          <div class="node" id="h-n1"><div class="t">Phone</div><div class="d">the letter stays here</div></div>
+          <div class="arrow" id="h-a1">→</div>
+          <div class="node mid" id="h-n2">
             <div class="t">One sentence</div>
-            <div class="d">summary text only<br />own hotspot, LAN only</div>
+            <div class="d">the summary text only, over our own hotspot</div>
           </div>
-          <div class="arrow">→</div>
-          <div class="node"><div class="t">Laptop GPU</div><div class="d">MERaLiON Hokkien TTS<br />A*STAR, open weights</div></div>
+          <div class="arrow" id="h-a2">→</div>
+          <div class="node" id="h-n3">
+            <div class="t">Laptop GPU</div>
+            <div class="d">MERaLiON OmniVoice Hokkien TTS — A*STAR, open weights</div>
+          </div>
         </div>
-        <div class="sub">It beats every general Chinese TTS we tested at not collapsing into Mandarin.</div>
+        <div class="sub" id="h-sub">It beats every general Chinese TTS we tested at not collapsing into Mandarin.</div>
       </div>
 
-      <!-- 13. What's missing 1:44 -->
-      <div id="c13" class="clip" data-start="113.2" data-duration="12.7" data-track-index="1">
-        <div class="headline" style="font-size:64px">The ONNX export is an<br />open issue upstream.</div>
-        <div class="sub">When it lands, SunAh is fully on-device with no change to our code.<br />
+      <!-- 9. What is still missing — 2:03 -->
+      <div id="sc-onnx" class="clip" data-start="123.90" data-duration="16.20" data-track-index="1">
+        <div class="kicker" id="x-kick">No mobile build yet</div>
+        <div class="headline" id="x-head" style="font-size:70px">
+          <span class="ln">The ONNX export is an</span>
+          <span class="ln">open issue upstream.</span>
+        </div>
+        <div class="sub" id="x-sub">When it lands, SunAh is fully on-device with no change to our code.</div>
+        <div class="sub" id="x-sub2" style="font-size:34px;color:#1F1A16;margin-top:22px">
           That's the piece Singapore's open speech stack is still missing.</div>
       </div>
 
-      <!-- 14. End card 1:54 -->
-      <div id="c14" class="clip" data-start="125.9" data-duration="11.36" data-track-index="1">
-        <div class="brand" style="font-size:110px">SunAh</div>
-        <div class="fixtures">
-          <div class="fx">✓ CPF credit</div>
-          <div class="fx">✓ Polyclinic reschedule</div>
-          <div class="fx">✓ Town council arrears</div>
-          <div class="fx">✓ CHAS renewal</div>
-          <div class="fx">✓ Scam demand</div>
-          <div class="fx">✓ Lift closure</div>
+      <!-- 10. End card — 2:20 -->
+      <div id="sc-end" class="clip" data-start="140.10" data-duration="5.90" data-track-index="1">
+        <div class="brand" id="e-brand" style="font-size:118px">SunAh</div>
+        <div class="chiprow" id="e-chips">
+          <div class="chip fx">CPF credit</div>
+          <div class="chip fx">Polyclinic reschedule</div>
+          <div class="chip fx">Town council arrears</div>
+          <div class="chip fx">CHAS renewal</div>
+          <div class="chip fx">Scam demand</div>
+          <div class="chip fx">Lift closure</div>
         </div>
-        <div class="badge">6 of 6 — on-device, on a Pixel 9</div>
+        <div class="badge" id="e-badge">Six test letters. Six correct.</div>
       </div>
     </div>
 
@@ -227,27 +444,140 @@
       window.__timelines = window.__timelines || {};
       const tl = gsap.timeline({ paused: true });
 
-      // Each clip fades and lifts in. Held deliberately slow — this is a video
-      // about a product for people with slower visual processing, and a deck
-      // that snaps around undercuts that.
-      const ins = [
-        ["#c1", 0], ["#c2", 7.6], ["#c3", 22.9], ["#c4", 33],
-        ["#c7", 39.4], ["#c8", 53.4], ["#c9", 61], ["#c10", 69.9],
-        ["#c11", 87.7], ["#c12", 97.9], ["#c13", 113.2], ["#c14", 125.9],
-      ];
-      ins.forEach(([sel, at]) => {
-        tl.from(sel, { opacity: 0, y: 28, duration: 0.7, ease: "power2.out" }, at);
-      });
+      // Every reveal time below is a word timing taken from a word-level
+      // transcript of script.m4a, pulled ~0.1-0.2s early so the eye leads the
+      // ear rather than chasing it.
+      const rise = (sel, at, d) =>
+        tl.fromTo(sel, { opacity: 0, y: 26 },
+          { opacity: 1, y: 0, duration: d || 0.6, ease: "power2.out" }, at);
+      const pop = (sel, at, d) =>
+        tl.fromTo(sel, { opacity: 0, scale: 0.92 },
+          { opacity: 1, scale: 1, duration: d || 0.55, ease: "back.out(1.6)" }, at);
+      const fade = (sel, at, to, d) =>
+        tl.to(sel, { opacity: to, duration: d || 0.4, ease: "power1.inOut" }, at);
 
-      // Stats count up rather than appearing, so the eye has something to
-      // follow while the narration says the number.
-      tl.from("#s1", { scale: 0.9, opacity: 0, duration: 0.6 }, 8.0);
-      tl.from("#s2", { scale: 0.9, opacity: 0, duration: 0.6 }, 8.8);
-      tl.from("#s3", { scale: 0.9, opacity: 0, duration: 0.6 }, 23.3);
-      tl.from("#s4", { scale: 0.9, opacity: 0, duration: 0.6 }, 24.1);
+      // Held deliberately slow. This is a video about a product for people
+      // whose visual processing has slowed down, and a deck that snaps around
+      // undercuts the argument it is making.
+      [["#sc-title", 0], ["#sc-ageing", 4.30], ["#sc-scam", 17.20], ["#sc-poly", 31.10],
+       ["#sc-lang", 62.60], ["#sc-ondevice", 77.00], ["#sc-voice", 94.30],
+       ["#sc-hokkien", 106.30], ["#sc-onnx", 123.90], ["#sc-end", 140.10]
+      ].forEach(function (s) { rise(s[0], s[1], 0.7); });
 
-      // The cloud gets crossed out only after the narration says it.
-      tl.from("#n2", { opacity: 0, scale: 0.5, duration: 0.5 }, 73.5);
+      /* 1. Title — "This is the letter from the government." @0.84 */
+      rise("#t-brand", 0.15, 0.8);
+      rise("#t-hok", 0.80, 0.7);
+      rise("#t-sub", 1.60, 0.7);
+
+      /* 2. Ageing — "By 2030" @4.78 · "one in four" @6.24 · "83,000" @9.92
+            · "Many were never English-educated" @12.30 · "dialect" @15.94 */
+      rise("#a-kick", 4.55);
+      pop("#a-s1", 6.15);
+      pop("#a-s2", 9.80);
+      rise("#a-foot", 12.15);
+      tl.fromTo("#a-dialect", { color: "#57504A" }, { color: "#14547F", duration: 0.45 }, 15.85);
+
+      /* 3. Scam — "$913 million" @18.62 · "37,000" @24.26 · "8 times" @26.72 */
+      rise("#s-kick", 17.45);
+      pop("#s-s1", 18.45);
+      pop("#s-s2", 24.10);
+      rise("#s-foot", 25.75);
+      pop("#s-mult", 26.55, 0.45);
+
+      /* 4. Polyclinic.
+            "So when an official letter arrives..."    @32.02
+            "The polyclinic letter"                    @39.68
+            "has two dates on it"                      @41.94
+            "a cancelled one"                          @43.60
+            "and a new one"                            @44.42
+            -- narration stops; Hokkien plays 46.75 -> 52.69 --
+            "It reads the new one"                     @53.93
+            "and it shows the line it got that from"   @55.95
+            "so a family member can check it"          @59.45 */
+      rise("#p-b1", 31.50, 0.8);
+      fade("#p-b1", 38.20, 0, 0.5);
+      rise("#p-b2", 39.30, 0.7);
+      rise("#p-old", 43.45);
+      rise("#p-new", 44.55);
+      fade("#p-b2", 46.30, 0, 0.5);
+      // What Sun Ah is saying, up for exactly as long as it is saying it.
+      rise("#p-hok", 47.10, 0.8);
+      fade("#p-hok", 53.30, 0, 0.5);
+      rise("#p-b3", 55.60, 0.7);
+      rise("#p-quote", 56.40, 0.7);
+
+      // The speed badge is up for exactly as long as the sped-up clip is.
+      tl.fromTo("#p-speed", { opacity: 0 }, { opacity: 1, duration: 0.35 }, 37.70);
+      fade("#p-speed", 45.00, 0, 0.35);
+      // Freeze on the card before the clip runs out, so it can be pointed at.
+      tl.fromTo("#poly-still", { opacity: 0 }, { opacity: 1, duration: 0.25 }, 51.80);
+      // Chip appears with the card; the bars move only while the voice is talking.
+      tl.fromTo("#p-chip", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4 }, 45.90);
+      tl.fromTo("#p-bars i", { scaleY: 0.25 },
+        { scaleY: 1, duration: 0.28, ease: "sine.inOut", transformOrigin: "50% 100%",
+          stagger: { each: 0.09, repeat: 19, yoyo: true } }, 46.75);
+      fade("#p-chip", 53.10, 0, 0.4);
+
+      /* 5. Language switch.
+            "One tap"           @63.17
+            "switch languages"  @64.07
+            "same letter,"      @66.15
+            "Malay."            @67.33
+            -- narration stops; Malay plays 70.65 -> 76.41 -- */
+      rise("#l-b1", 62.90, 0.7);
+      // Ring the row the thumb is about to hit, then let the real tap land.
+      tl.fromTo("#l-tap", { opacity: 0, scale: 1.12 },
+        { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" }, 63.35);
+      fade("#l-tap", 64.20, 0, 0.3);
+      fade("#l-b1", 68.30, 0, 0.4);
+      tl.fromTo("#l-cut", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 67.25);
+      fade("#l-cut", 68.95, 0, 0.3);
+      tl.fromTo("#l-chip", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4 }, 69.30);
+      rise("#l-b2", 69.60, 0.7);
+      tl.fromTo("#l-bars i", { scaleY: 0.25 },
+        { scaleY: 1, duration: 0.28, ease: "sine.inOut", transformOrigin: "50% 100%",
+          stagger: { each: 0.09, repeat: 19, yoyo: true } }, 70.65);
+
+      /* 6. On-device — "cloud API" @81.54 · "Gemma 4 E2B" @82.66
+            · "never crosses the network" @92.04 */
+      rise("#o-kick", 77.30);
+      pop("#o-n2", 81.30);
+      rise("#o-n1", 82.45, 0.7);
+      pop("#o-x", 83.60, 0.45);
+      fade("#o-n2", 83.80, 0.42, 0.5);
+      rise("#o-sub", 91.80);
+
+      /* 7. Voice — "For four of five languages" @94.64
+            · "We had to name the offline voice" @97.68 · "a server" @102.50 */
+      rise("#v-kick", 94.55);
+      rise("#v-head", 94.75, 0.7);
+      tl.fromTo("#v-chips .chip", { opacity: 0, y: 22 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out", stagger: 0.16 }, 95.90);
+      rise("#v-sub", 97.55);
+
+      /* 8. Hokkien — "For Hokkien and only Hokkien" @106.66 · "one summary
+            sentence" @109.00 · "goes to a laptop" @109.88 · "A*STAR released
+            open Hokkien TTS" @113.60 · "not collapsing into Mandarin" @119.88 */
+      rise("#h-kick", 106.50);
+      rise("#h-n1", 106.90, 0.7);
+      pop("#h-a1", 108.80, 0.4);
+      rise("#h-n2", 109.00, 0.7);
+      pop("#h-a2", 109.75, 0.4);
+      rise("#h-n3", 113.45, 0.7);
+      rise("#h-sub", 119.70);
+
+      /* 9. ONNX — "It has no mobile build yet" @124.34 · "The ONNX export"
+            @126.22 · "When it lands" @130.62 · "That is the piece..." @134.72 */
+      rise("#x-kick", 124.20);
+      rise("#x-head", 126.05, 0.7);
+      rise("#x-sub", 130.45);
+      rise("#x-sub2", 134.55);
+
+      /* 10. End — "Six test letters" @140.82 · "six correct" @142.70 */
+      rise("#e-brand", 140.25, 0.8);
+      tl.fromTo("#e-chips .chip", { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power2.out", stagger: 0.11 }, 140.70);
+      pop("#e-badge", 142.55, 0.6);
 
       window.__timelines["main"] = tl;
     </script>
