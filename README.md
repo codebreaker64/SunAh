@@ -1,20 +1,66 @@
+# Sun Ah (孙仔)
 
+**Point a phone at an official letter and hear, in your own language, what it is, whether you need to act, and by when.** On-device Gemma reads the letter; the answer is spoken in Hokkien, Malay, Mandarin, Tamil or English.
+
+Built in a weekend at a hackathon in August 2026.
+
+## The problem
+
+Many of Singapore's older residents cannot read the English letters that government agencies, polyclinics and town councils send them, so a payment deadline, a rescheduled appointment or a scam demand sits unread until a grandchild visits.
+
+## Demo
 
 https://github.com/user-attachments/assets/964535cc-5a40-437c-89c4-41b2cf8e2889
 
+## How it works
 
+```mermaid
+flowchart LR
+    L["Official letter"] -->|camera| G
 
-# Sun Ah (孙仔)
+    subgraph P["Android phone"]
+        G["Gemma 4 E2B, on-device<br/>react-native-executorch"] --> F["Structured fields<br/>status · amount · deadline · quote"]
+        F --> T["Sentence built from templates<br/>src/speech.ts"]
+        T --> V["On-device TTS<br/>English · Malay · Mandarin · Tamil"]
+        T -.->|"laptop unreachable"| M["Fallback: Mandarin template<br/>spoken on device"]
+    end
 
-A one-tap letter reader for Singapore's seniors. Point the camera at an
-official letter; Sun Ah says in your own language what it is, whether you need
-to do anything, and whether it's a scam.
+    T -->|"Hokkien only:<br/>one sentence over LAN"| S["Laptop voice server<br/>FastAPI + OmniVoice Hokkien TTS"]
+    S -->|audio| P
+```
 
-Built to the v4 blueprint. Section references below point at it.
+The letter itself never leaves the phone. The model returns structured fields rather than prose, and the spoken sentence is assembled from reviewed templates, so the model cannot invent wording. Four of the five languages are voiced by offline system voices on the phone. Hokkien has no phone voice anywhere, so for Hokkien alone one summary sentence goes to a laptop on the same network; if the laptop is unreachable, the phone speaks the Mandarin template and says on the card that it has done so. An optional cloud voice (Gemini TTS, proxied through the laptop) exists but is off by default.
+
+## Result
+
+**6 of 6 test letters correct**, run fully on-device with Gemma 4 E2B on a Pixel 9 at 25 to 39 seconds per letter. A letter passes only if the status, amount and deadline match exactly and the model quotes the line it relied on; the six include a fake-agency scam and a reschedule letter that carries both a cancelled and a new date.
+
+<p align="center"><img src="docs/gate-results.png" alt="On-device run: six of six fixture letters pass" width="300"></p>
+
+These runs feed the letters in as text, which isolates classification from the camera; see [Known limitations](#known-limitations).
+
+## Known limitations
+
+**The Hokkien has not been reviewed by a native speaker.** The templates in `src/speech.ts` are written in hanzi with Tâi-lô romanisation in the comments, so a review is one pass over one file, but that pass has not happened yet. The Malay and Tamil lines are in the same position.
+
+**The Hokkien voice is described, not cloned.** Without a recording of a real Hokkien speaker, the voice server falls back to OmniVoice's voice-design mode. It speaks Hokkien, but the voice is synthesised from a text description. A cloning reference must itself be Hokkien, since a Mandarin or English clip carries its accent into every generated line.
+
+**Dates from the camera path are not yet reliable.** The six-letter result above is from text input. In both recorded camera takes of the polyclinic letter, the model gave a date that appears nowhere on the letter, so the demo video deliberately makes no claim about which date was read. Fixing extraction from images is the next piece of work.
+
+**Inference is slow.** 25 to 55 seconds per letter on a Pixel 9. The demo video cuts the waits but labels them with the real times.
+
+**Hokkien needs the laptop.** The app is not fully offline: four of five languages are, and Hokkien sends one sentence to a machine on the local network.
 
 ---
 
-## Corrections to the blueprint
+## Engineering notes
+
+These are the working notes from the build. It followed a written plan, the "v4 blueprint", which is not in this
+repo; the § references below point at it.
+
+---
+
+### Corrections to the blueprint
 
 Three things in the v4 document don't match what's actually shipping. They were
 verified against the published package, not assumed.
@@ -30,9 +76,9 @@ verified against the published package, not assumed.
 
 ---
 
-## Setup
+### Setup
 
-### Phone side
+#### Phone side
 
 ```bash
 npm install
@@ -48,7 +94,7 @@ error, that variable has drifted back to 22.
 The Gemma `.pte` downloads to the phone on first launch, not to the laptop.
 Budget a few GB of free space there.
 
-### Laptop side
+#### Laptop side
 
 **Python 3.11, not the system 3.13.** This machine's default is 3.13, and
 PyTorch publishes **no Windows cu121 wheel for cp313** — only Linux. The one
@@ -79,10 +125,15 @@ into the phone's settings.
 and a Chromium browser holds ~1 GB of it. With Brave running, creating a CUDA
 context failed outright (`cudaErrorDevicesUnavailable`) — not an OOM, a refusal.
 
+**If the phone is on USB rather than Wi-Fi**, leave `scripts/keep-usb-alive.sh`
+running in its own Git Bash window. `adb reverse` drops silently whenever the
+USB link glitches, and the only symptom is Hokkien falling back to Mandarin,
+which looks like an app bug and is not one.
+
 Check `/health` from the phone's browser before pitching. It reports
 `voice_mode`: `clone` if `ah_ma_voice.pt` exists, `design` if not.
 
-### If you have no Hokkien recording yet
+#### If you have no Hokkien recording yet
 
 The server no longer refuses to start. Without `ah_ma_voice.pt` it uses
 OmniVoice's voice-design mode — a voice described in words rather than cloned.
@@ -91,7 +142,7 @@ ah-ma is the thing judges will remember, but a described voice beats silence.
 
 ---
 
-## Running the viability test
+### Running the viability test
 
 §10 puts this first, before any UI: feed fixtures 2 and 6 to E2B at 09:00, not
 at 16:00.
@@ -109,7 +160,7 @@ specifically, and mitigation 4 is the fix.
 
 ---
 
-## Layout
+### Layout
 
 ```
 src/types.ts       Status, Lang, LetterResult
@@ -128,11 +179,15 @@ components/FixtureRunner.tsx  The 09:00 viability test
 
 server/main.py                FastAPI + OmniVoice, fp16, GPU lock
 server/make_voice_prompt.py   Build ah_ma_voice.pt once, before Saturday
+
+scripts/keep-usb-alive.sh     Re-establishes adb reverse every 10 s (Git Bash)
+docs/demo-video/              HyperFrames source for the demo video, see SCRIPT.md
+docs/gate-results.png         Screenshot of the six-fixture run on the Pixel
 ```
 
 ---
 
-## The privacy claim needs one line of code to be true
+### The privacy claim needs one line of code to be true
 
 Section 3 says to put this on a slide: *"For four of five languages the voice
 is offline too."*
@@ -157,7 +212,7 @@ played from: device-fallback
 If it says `(0 offline)` for your language, the claim does not hold — install
 the language pack under Android's text-to-speech settings first.
 
-## When Hokkien has no voice
+### When Hokkien has no voice
 
 There is no Hokkien voice on any phone, so with the laptop unreachable the app
 falls back to the Mandarin **template** — not the Hokkien string read by a
@@ -170,20 +225,7 @@ far likelier to follow 华语.
 
 ---
 
-## Two things that still need a person
-
-**The Hokkien needs a native speaker.** `src/speech.ts` carries the templates in
-hanzi with Tâi-lô romanisation in the comments so a review is one pass over one
-file. It has not had that pass. The person who records the voice reference is
-the obvious reviewer. The Malay and Tamil lines want the same treatment.
-
-**The voice reference must actually be Hokkien.** A Mandarin or English clip
-carries its own accent into every generated line, and you won't notice until
-you're in front of a judge.
-
----
-
-## Design decisions worth knowing
+### Design decisions worth knowing
 
 **The model never writes the spoken sentence.** It returns structured fields;
 `speech.ts` assembles the sentence from templates. That's §4 mitigation 5, and

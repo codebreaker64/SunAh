@@ -44,7 +44,7 @@ yarn-error.*
 .selftest/
 
 # hyperframes and video
-video/
+docs/demo-video/
 .hyperframes/
 *.mp4
 *.m4a

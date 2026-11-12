@@ -116,7 +116,7 @@ Record on the device, not with a camera pointed at it:
 ```bash
 adb shell screenrecord --size 1080x2400 --bit-rate 8000000 /sdcard/shot.mp4
 # ...perform the scan, then Ctrl-C...
-adb pull /sdcard/shot.mp4 video/
+adb pull /sdcard/shot.mp4 docs/demo-video/
 ```
 
 **Before recording, every time:**
@@ -134,7 +134,7 @@ adb pull /sdcard/shot.mp4 video/
 ## Rebuilding
 
 ```bash
-cd video
+cd docs/demo-video
 npx hyperframes check
 npx hyperframes render --quality high --fps 30 --video-frame-format png --workers 3 \
   --output renders/sunah-demo.mp4
