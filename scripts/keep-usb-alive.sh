@@ -3,7 +3,7 @@
 # symptom is the app saying "Hokkien voice unavailable" — which looks like an
 # app bug and is not one. This re-establishes it every 10 seconds.
 #
-#   bash keep-usb-alive.sh
+#   bash scripts/keep-usb-alive.sh
 #
 # Leave it running in its own terminal while testing or recording.
 export PATH="/c/Users/foong/android/platform-tools:$PATH"
