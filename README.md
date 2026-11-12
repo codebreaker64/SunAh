@@ -1,3 +1,9 @@
+
+
+https://github.com/user-attachments/assets/964535cc-5a40-437c-89c4-41b2cf8e2889
+
+
+
 # Sun Ah (孙仔)
 
 A one-tap letter reader for Singapore's seniors. Point the camera at an
